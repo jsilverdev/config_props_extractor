@@ -8,7 +8,9 @@ environment:
 
 # Add regular dependencies here.
 dependencies:
+  args: ^2.4.1
   properties: ^2.0.0
+  string_validator: ^1.0.0
   # path: ^1.8.0
 
 dev_dependencies:
