@@ -19,9 +19,7 @@ void main(List<String> arguments) {
     if (!string_validator.isBase64(value)) continue;
 
     final decodedValue = tryBase64Decode(value);
-    if(decodedValue == value) continue;
-    print("$key : $decodedValue");
-    // p.add(key, decodedValue);
+    print("$key=$decodedValue");
   }
 }
 
@@ -29,7 +27,7 @@ String tryBase64Decode(value) {
   try {
     return utf8.decode(base64Decode(value));
   } catch (e) {
-    print("Cant decode: $value");
+    // print("Cant decode: $value");
   }
   return value;
 }
