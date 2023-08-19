@@ -1,6 +1,6 @@
-import 'package:base64_properties_decoder/exceptions/handler.dart';
-import 'package:base64_properties_decoder/services/git_service.dart';
-import 'package:base64_properties_decoder/services/shell_service.dart';
+import 'package:config_props_extractor/exceptions/handler/handler.dart';
+import 'package:config_props_extractor/services/git_service.dart';
+import 'package:config_props_extractor/services/shell_service.dart';
 import 'package:process_run/process_run.dart';
 
 String fileArgument = "file";

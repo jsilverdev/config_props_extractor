@@ -1,5 +1,5 @@
-name: base64_properties_decoder
-description: A command-line application to decode base64 .properties values
+name: config_props_extractor
+description: A command-line application to get properties from ConfigMaps and Secrets
 version: 1.0.0
 # repository: https://github.com/my_org/my_repo
 
