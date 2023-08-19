@@ -1,33 +1,21 @@
-import 'dart:convert';
-
-import 'package:args/args.dart';
-import 'package:properties/properties.dart';
-import 'package:string_validator/string_validator.dart' as string_validator;
+import 'package:base64_properties_decoder/exceptions/handler.dart';
+import 'package:base64_properties_decoder/services/git_service.dart';
+import 'package:base64_properties_decoder/services/shell_service.dart';
+import 'package:process_run/process_run.dart';
 
 String fileArgument = "file";
-void main(List<String> arguments) {
-  final parser = ArgParser()..addOption(fileArgument, abbr: 'f');
+final shell = Shell();
+void main(List<String> arguments) async {
+  final shellService = ShellService();
+  final gitService = GitService(shellService);
 
-  ArgResults argResults = parser.parse(arguments);
+  final filePath = "";
+  final branch = "develop";
+  // final String configLocation = "";
+  // final String secretLocation = "";
 
-  final String filePath = argResults[fileArgument];
-
-  Properties p = Properties.fromFile(filePath);
-
-  for (var key in p.keys) {
-    final String value = p.get(key) ?? '';
-    if (!string_validator.isBase64(value)) continue;
-
-    final decodedValue = tryBase64Decode(value);
-    print("$key=$decodedValue");
-  }
-}
-
-String tryBase64Decode(value) {
-  try {
-    return utf8.decode(base64Decode(value));
-  } catch (e) {
-    // print("Cant decode: $value");
-  }
-  return value;
+  Handler().handle(() async {
+    shellService.checkExecutable("git");
+    gitService.getLastChangesFromRepo(filePath, branch);
+  });
 }
