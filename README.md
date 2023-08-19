@@ -1,6 +1,6 @@
-# Dart Properties Decoder
+# Config Properties Extractor
 
-Simple command-line application to decode base64 values in .properties files
+Simple command-line application to get properties from ConfigMaps and Secrets
 
 ## Features
 
@@ -18,13 +18,13 @@ Before to run this app requires the following
 Clone the project
 
 ```bash
-  git clone https://github.com/jsilverdev/base64_properties_decoder.git
+  git clone https://github.com/jsilverdev/config_props_extractor.git
 ```
 
 Go to the project directory
 
 ```bash
-  cd base64_properties_decoder
+  cd config_props_extractor
 ```
 
 Install dependencies
