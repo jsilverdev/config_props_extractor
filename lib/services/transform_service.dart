@@ -65,8 +65,13 @@ class TransformService {
     return "${branch}_$baseNameFolder$extension";
   }
 
+  Map<String, String> _getMapForProperties(Map<String, dynamic> data) {
+    return data.map((key, value) => MapEntry(key, value.toString().replaceAll("\n", ' \\\n')));
+  }
+
   void saveKubeConfigDataAsProperties() {
-    final prop = Properties.fromMap(kubeConfigData.cast<String,String>());
-    prop.saveToFile(_getFileName(".properties"));
+    final prop = Properties.fromMap(_getMapForProperties(kubeConfigData));
+    prop.saveToFile(
+        "application-${_appConfig.gitBranch.toLowerCase()}.properties");
   }
 }
