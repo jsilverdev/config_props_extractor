@@ -1,21 +1,28 @@
+import 'package:config_props_extractor/config/app_config.dart';
 import 'package:config_props_extractor/exceptions/handler/handler.dart';
-import 'package:config_props_extractor/services/git_service.dart';
+import 'package:config_props_extractor/services/transform_service.dart';
+import 'package:config_props_extractor/services/repo_service.dart';
 import 'package:config_props_extractor/services/shell_service.dart';
-import 'package:process_run/process_run.dart';
 
-String fileArgument = "file";
-final shell = Shell();
-void main(List<String> arguments) async {
-  final shellService = ShellService();
-  final gitService = GitService(shellService);
+void main(List<String> arguments) {
+  Handler().handle(() => runApp(arguments));
+}
 
-  final filePath = "";
-  final branch = "develop";
-  // final String configLocation = "";
-  // final String secretLocation = "";
+void runApp(List<String> arguments) async {
+  final appConfig = AppConfig();
 
-  Handler().handle(() async {
-    shellService.checkExecutable("git");
-    gitService.getLastChangesFromRepo(filePath, branch);
-  });
+  final repoService = RepoService(
+    appConfig,
+    ShellService(),
+  );
+
+  await repoService.setup();
+  repoService.dispose();
+
+  final transformService = TransformService(appConfig);
+  transformService
+    ..loadLKubeConfigMapsData()
+    ..loadKubeSecretsData()
+    ..saveKubeConfigDataAsTxt()
+    ..saveKubeConfigDataAsProperties();
 }
