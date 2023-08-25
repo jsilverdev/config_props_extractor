@@ -1,3 +1,4 @@
+// coverage:ignore-file
 abstract class AppException implements Exception {
   final String _message;
 
