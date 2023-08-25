@@ -31,37 +31,39 @@ Before to run this app requires the following
 
 - [dart](https://dart.dev/get-dart) (or [flutter](https://docs.flutter.dev/get-started/install), which includes dart)
 
-Clone the project
+### Steps:
+
+1. Clone the project
 
 ```bash
   git clone https://github.com/jsilverdev/config_props_extractor.git
 ```
 
-Go to the project directory
+2. Go to the project directory
 
 ```bash
   cd config_props_extractor
 ```
 
-Create .env from the .env.example
+3. Create .env from the .env.example
 
 ```bash
   cp .env.example .env
 ```
 
-Define the `GIT_REPO_PATH` in the .env file
+4. Define the `GIT_REPO_PATH` in the .env file
 
 ```dotenv
   GIT_REPO_PATH="path/to/config_folder_path"
 ```
 
-Install dependencies
+5. Install dependencies
 
 ```bash
   dart pub get
 ```
 
-Start the cli app
+6. Start the cli app
 
 ```bash
   dart run bin/main.dart
