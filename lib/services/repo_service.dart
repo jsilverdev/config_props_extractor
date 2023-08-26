@@ -59,7 +59,7 @@ class RepoService {
   String _gitArgs() {
     return shellArguments([
       "-c",
-      !_appConfig.gitSSLEnable ? "http.sslVerify=false" : "",
+      !_appConfig.gitSSLEnabled ? "http.sslVerify=false" : "",
     ]);
   }
 }

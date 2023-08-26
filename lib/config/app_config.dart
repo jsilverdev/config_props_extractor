@@ -2,6 +2,7 @@ import 'package:dotenv/dotenv.dart';
 
 import '../constants/constants.dart' as constants;
 import '../exceptions/exceptions.dart';
+import '../models/config_property.dart';
 import '../utils/string_utils.dart';
 
 class AppConfig {
@@ -11,33 +12,44 @@ class AppConfig {
       : _dotEnv = dotEnv ?? (DotEnv(includePlatformEnvironment: true)..load());
 
   String get gitRepoPath => _dotEnv.getOrElse(
-        "GIT_REPO_PATH",
-        () => throw ConfigPropertyMissingException(property: "GIT_REPO_PATH"),
+        ConfigProperty.gitRepoPath.value,
+        () => throw ConfigPropertyMissingException(
+          property: ConfigProperty.gitRepoPath.value,
+        ),
       );
 
-  bool get gitForceRemote =>
-      _dotEnv.getOrElse("GIT_FORCE_REMOTE", () => 'false').toBoolean();
-
-  bool get gitSSLEnable => _dotEnv
+  bool get gitForceRemote => _dotEnv
       .getOrElse(
-        "GIT_SSL_ENABLED",
+        ConfigProperty.gitForceRemote.value,
+        () => 'false',
+      )
+      .toBoolean();
+
+  bool get gitSSLEnabled => _dotEnv
+      .getOrElse(
+        ConfigProperty.gitSSLEnabled.value,
         () => 'true',
       )
       .toBoolean();
 
-  String get gitBranch => _dotEnv.getOrElse("GIT_BRANCH", () => "");
+  String get gitBranch => _dotEnv.getOrElse(
+        ConfigProperty.gitBranch.value,
+        () => "",
+      );
 
   set gitBranch(String gitBranch) {
-    _dotEnv.addAll({"GIT_BRANCH": gitBranch});
+    _dotEnv.addAll({
+      ConfigProperty.gitBranch.value: gitBranch,
+    });
   }
 
   String get configMapsPath => _dotEnv.getOrElse(
-        "CONFIG_MAPS_PATH",
+        ConfigProperty.configMapsPath.value,
         () => constants.DEFAULT_CONFIG_MAP_PATH,
       );
 
   String get secretsPath => _dotEnv.getOrElse(
-        "SECRETS_PATH",
+        ConfigProperty.secretsPath.value,
         () => constants.DEFAULT_CONFIG_SECRET_PATH,
       );
 }
