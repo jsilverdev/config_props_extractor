@@ -11,6 +11,7 @@ dependencies:
   args: ^2.4.1
   dotenv: ^4.1.0
   logger: ^2.0.1
+  meta: ^1.9.1
   path: ^1.8.3
   process_run: ^0.13.0
   properties: ^2.1.0

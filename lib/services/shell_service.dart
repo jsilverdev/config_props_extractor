@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:meta/meta.dart';
+
 import '../exceptions/exceptions.dart';
 import 'package:process_run/process_run.dart';
 import 'package:path/path.dart' as path;
@@ -34,4 +36,7 @@ class ShellService {
   void dispose() {
     _shell.kill();
   }
+
+  @visibleForTesting
+  String? get shellWorkingDir => _shell.options.workingDirectory;
 }
