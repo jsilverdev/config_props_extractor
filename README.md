@@ -77,6 +77,24 @@ To run tests, run the following command
   dart test
 ```
 
+If you want run tests with coverage, install [coverage](https://pub.dev/packages/coverage) globally
+
+```bash
+  dart pub global activate coverage
+```
+
+Then run
+
+```bash
+  dart pub global run coverage:test_with_coverage --function-coverage --branch-coverage
+```
+
+Finally if you want to see generated html, use lcov on [linux](https://github.com/linux-test-project/lcov) and [mac](https://formulae.brew.sh/formula/lcov), if you are on windows use [jgenhtml](https://github.com/ricksbrown/jgenhtml) and then run
+
+```bash
+  genhtml -o coverage coverage/lcov.info
+```
+
 ## Roadmap
 
 - Functionality for extract from a remote git repo
