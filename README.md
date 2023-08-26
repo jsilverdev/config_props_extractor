@@ -30,6 +30,7 @@ To run this project, you will need to add the following environment variables to
 Before to run this app requires the following
 
 - [dart](https://dart.dev/get-dart) (or [flutter](https://docs.flutter.dev/get-started/install), which includes dart)
+- [git](https://git-scm.com/downloads)
 
 ### Steps:
 
@@ -89,7 +90,7 @@ Then run
   dart pub global run coverage:test_with_coverage --function-coverage --branch-coverage
 ```
 
-Finally if you want to see generated html, use lcov on [linux](https://github.com/linux-test-project/lcov) and [mac](https://formulae.brew.sh/formula/lcov), if you are on windows use [jgenhtml](https://github.com/ricksbrown/jgenhtml) and then run
+If you want to see a way to visualize this in a html page, you can use lcov for [Linux](https://github.com/linux-test-project/lcov) or [Mac](https://formulae.brew.sh/formula/lcov). If you are on Windows, you can use [jgenhtml](https://github.com/ricksbrown/jgenhtml) and then run
 
 ```bash
   genhtml -o coverage coverage/lcov.info
