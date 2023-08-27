@@ -8,7 +8,9 @@ environment:
 
 # Add regular dependencies here.
 dependencies:
+  clock: ^1.1.1
   dotenv: ^4.1.0
+  intl: ^0.18.1
   logger: ^2.0.1
   meta: ^1.9.1
   path: ^1.8.3

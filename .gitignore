@@ -5,3 +5,5 @@
 coverage/
 .env
 .git_repos/
+PROPERTIES_FILE.txt
+application-local.properties

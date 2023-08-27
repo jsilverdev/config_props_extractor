@@ -1,15 +1,15 @@
 import 'dart:io';
 
 import 'package:path/path.dart' as path;
-import 'package:properties/properties.dart';
 
 import '../config/app_config.dart';
 import '../models/kube_kind.dart';
+import '../utils/date_utils.dart';
 import '../utils/kube_utils.dart';
 
 class TransformService {
   final AppConfig _appConfig;
-  Map<String, dynamic> kubeConfigData = Map.of({});
+  KubeConfigData kubeConfigData = {};
 
   TransformService(this._appConfig);
 
@@ -19,10 +19,10 @@ class TransformService {
       _appConfig.configMapsPath,
     ));
 
-    kubeConfigData.addAll(getDataPropFromKubeConfigDirectory(
+    kubeConfigData.addAllFromDir(
       configMapDir,
-      KubeConfigKind.configMap,
-    ));
+      kind: KubeConfigKind.configMap,
+    );
   }
 
   void loadKubeSecretsData() {
@@ -31,14 +31,14 @@ class TransformService {
       _appConfig.secretsPath,
     ));
 
-    kubeConfigData.addAll(getDataPropFromKubeConfigDirectory(
+    kubeConfigData.addAllFromDir(
       secretsDir,
-      KubeConfigKind.secret,
-    ));
+      kind: KubeConfigKind.secret,
+    );
   }
 
   void saveKubeConfigDataAsTxt() {
-    final file = File(_getFileName(".txt"));
+    final file = File("PROPERTIES_FILE.txt");
 
     if (file.existsSync()) {
       file.deleteSync();
@@ -46,32 +46,14 @@ class TransformService {
     file.createSync();
 
     var sink = file.openWrite();
-    sink.write(_getStringFromKubeConfigData(kubeConfigData));
+    sink.write("Properties file created at: ${formattedDate()}\n\n\n");
+    sink.write(kubeConfigData.toFormattedString());
     sink.close();
   }
 
-  String _getStringFromKubeConfigData(Map<String, dynamic> data) {
-    return data.entries
-        .map(
-          (entry) =>
-              "${entry.key}=${entry.value.toString().replaceAll("\n", "")}",
-        )
-        .reduce((value, element) => "$value;$element");
-  }
-
-  String _getFileName(String extension) {
-    final String baseNameFolder = path.basename(_appConfig.gitRepoPath);
-    final String branch = _appConfig.gitBranch.toUpperCase();
-    return "${branch}_$baseNameFolder$extension";
-  }
-
-  Map<String, String> _getMapForProperties(Map<String, dynamic> data) {
-    return data.map((key, value) => MapEntry(key, value.toString().replaceAll("\n", ' \\\n')));
-  }
-
   void saveKubeConfigDataAsProperties() {
-    final prop = Properties.fromMap(_getMapForProperties(kubeConfigData));
-    prop.saveToFile(
-        "application-${_appConfig.gitBranch.toLowerCase()}.properties");
+    kubeConfigData.toProperties().saveToFile(
+          "application-local.properties",
+        );
   }
 }

@@ -9,6 +9,7 @@ class AppConfig {
   final DotEnv _dotEnv;
 
   AppConfig({DotEnv? dotEnv})
+      // coverage:ignore-line
       : _dotEnv = dotEnv ?? (DotEnv(includePlatformEnvironment: true)..load());
 
   String get gitRepoPath => _dotEnv.getOrElse(

@@ -87,7 +87,7 @@ void main() {
         when(
           () => mockShell.run(any()),
         ).thenAnswer(
-          (_) => Future.value(expectedResult),
+          (_) async => expectedResult,
         );
 
         // act
