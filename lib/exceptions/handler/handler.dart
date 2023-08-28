@@ -1,14 +1,16 @@
-import 'dart:io';
-
+import '../../logger/app_logger.dart';
 import '../exceptions.dart';
 
-void handle(Function function) {
+Future<void> handle(Function function) async {
   try {
-    function();
+    await function();
   } on AppException catch (e) {
-    stderr.writeln(e.toString());
+    logger.e(e);
   } catch (e, s) {
-    stderr.writeln('Unknown exception:\n $e');
-    stderr.writeln('Stack trace:\n $s');
+    logger.f(
+      'Unknown Exception: Please contact with support to fix this error',
+      error: e,
+      stackTrace: s,
+    );
   }
 }

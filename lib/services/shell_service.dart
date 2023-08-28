@@ -1,13 +1,14 @@
 import 'dart:io';
 
-import '../exceptions/exceptions.dart';
-import 'package:process_run/process_run.dart';
 import 'package:path/path.dart' as path;
+import 'package:process_run/process_run.dart';
+
+import '../exceptions/exceptions.dart';
 
 class ShellService {
   Shell _shell;
 
-  ShellService({Shell? shell}) : _shell = shell ?? Shell();
+  ShellService({Shell? shell}) : _shell = shell ?? Shell(verbose: false);
 
   void checkExecutable(String executable) {
     final execLocation = path.basename(executable) == executable
