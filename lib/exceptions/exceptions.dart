@@ -23,18 +23,3 @@ class ConfigPropertyMissingException extends AppException {
 abstract class YamlException extends AppException {
   YamlException(super._message);
 }
-
-class YamlMissingKeyException extends YamlException {
-  YamlMissingKeyException({
-    required String key,
-    required String path,
-  }) : super('Missing "$key" key in the yaml file located at: $path');
-}
-
-class YamlKeyValueMissingException extends YamlException {
-  YamlKeyValueMissingException({
-    required String key,
-    required value,
-    required String path,
-  }) : super('The "$key" key doest no have the value "$value" in the yaml file located at: $path');
-}

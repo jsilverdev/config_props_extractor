@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:config_props_extractor/config/app_config.dart';
 import 'package:config_props_extractor/constants/constants.dart';
 import 'package:config_props_extractor/exceptions/exceptions.dart';
 import 'package:config_props_extractor/services/repo_service.dart';
@@ -8,7 +7,7 @@ import 'package:config_props_extractor/services/shell_service.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
 
-class MockAppConfig extends Mock implements AppConfig {}
+import '../helpers/mocks.dart';
 
 class MockShellService extends Mock implements ShellService {}
 

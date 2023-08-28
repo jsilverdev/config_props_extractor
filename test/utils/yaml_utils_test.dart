@@ -1,4 +1,3 @@
-import 'package:config_props_extractor/exceptions/exceptions.dart';
 import 'package:config_props_extractor/utils/yaml_utils.dart';
 import 'package:test/test.dart';
 import 'package:yaml_magic/yaml_magic.dart';
@@ -32,49 +31,31 @@ void main() {
     });
 
     test(
-      'Should return normally if a key exists for a YamlMagic',
+      'Should return a boolean if a key exists or not for a YamlMagic',
       () async {
-        expect(
-          // act
-          () => yamlMagic.keyExistsOrFail("key"),
-          // assert
-          returnsNormally,
-        );
-      },
-    );
-    test(
-      'Should throws YamlMissingKeyException if the key not exists in a YamlMagic',
-      () async {
-        expect(
-          // act
-          () => yamlMagic.keyExistsOrFail("anotherKey"),
-          // assert
-          throwsA(isA<YamlMissingKeyException>()),
-        );
+        // act
+        bool keyExists1 = yamlMagic.keyExists("key");
+        bool keyExists2 = yamlMagic.keyExists("anotherKey");
+        // assert
+        expect(keyExists1, equals(true));
+        expect(keyExists2, equals(false));
       },
     );
 
     test(
-      'Should returns normally if the key have the value in YamlMagic',
+      'Should returns a boolean if the key have the value or not for a YamlMagic',
       () async {
-        expect(
-          // act
-          () => yamlMagic.keyValueExistsOrFail("key", "value"),
-          // assert
-          returnsNormally,
+        // act
+        bool keyValueExists1 = yamlMagic.keyValueExists("key", "value");
+        bool keyValueExists2 = yamlMagic.keyValueExists("key", "anotherValue");
+        bool keyValueExists3 = yamlMagic.keyValueExists(
+          "anotherKey",
+          "anotherValue",
         );
-      },
-    );
-
-    test(
-      "Should throws a YamlKeyValueMissingException if the key doesn't have the value in YamlMagic",
-      () async {
-        expect(
-          // act
-          () => yamlMagic.keyValueExistsOrFail("key", "anotherValue"),
-          // assert
-          throwsA(isA<YamlKeyValueMissingException>()),
-        );
+        // assert
+        expect(keyValueExists1, equals(true));
+        expect(keyValueExists2, equals(false));
+        expect(keyValueExists3, equals(false));
       },
     );
   });

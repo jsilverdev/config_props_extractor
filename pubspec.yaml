@@ -12,10 +12,8 @@ dependencies:
   dotenv: ^4.1.0
   intl: ^0.18.1
   logger: ^2.0.1
-  meta: ^1.9.1
   path: ^1.8.3
   process_run: ^0.13.0
-  properties: ^2.1.0
   yaml_magic: ^1.0.5
 
 dev_dependencies:

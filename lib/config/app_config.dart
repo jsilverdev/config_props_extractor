@@ -8,9 +8,11 @@ import '../utils/string_utils.dart';
 class AppConfig {
   final DotEnv _dotEnv;
 
-  AppConfig({DotEnv? dotEnv})
-      // coverage:ignore-line
-      : _dotEnv = dotEnv ?? (DotEnv(includePlatformEnvironment: true)..load());
+  // coverage:ignore-start
+  AppConfig({
+    DotEnv? dotEnv,
+  }) : _dotEnv = dotEnv ?? (DotEnv(includePlatformEnvironment: true)..load());
+  // coverage:ignore-end
 
   String get gitRepoPath => _dotEnv.getOrElse(
         ConfigProperty.gitRepoPath.value,

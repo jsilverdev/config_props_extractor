@@ -16,3 +16,7 @@ const String GIT_REMOTE_HARD_RESET = '''
 ''';
 
 const GIT_SSL_VERIFY_FALSE = "http.sslVerify=false";
+
+const TXT_FILENAME = "properties_file.txt";
+
+const PROPERTIES_FILENAME = "application-local.properties";
