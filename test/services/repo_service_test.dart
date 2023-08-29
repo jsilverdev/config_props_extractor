@@ -35,11 +35,18 @@ void main() {
       // arrange
       final path = "/path/to/folder";
       final branch = "selected_branch";
-      final branches = ['', branch];
+      bool firstExec = true;
 
       when(() => mockAppConfig.gitRepoPath).thenReturn(path);
       when(() => mockAppConfig.gitBranch).thenAnswer(
-        (_) => isBranchDefined ? branch : branches.removeAt(0),
+        (_) {
+          if (isBranchDefined) return branch;
+          if (firstExec) {
+            firstExec = false;
+            return '';
+          }
+          return branch;
+        },
       );
       when(() => mockAppConfig.gitForceRemote).thenReturn(gitForceRemote);
       when(() => mockAppConfig.gitSSLEnabled).thenReturn(true);
