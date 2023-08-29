@@ -46,7 +46,7 @@ class RepoService {
     //TODO: Validate if is a git folder
 
     if (_appConfig.gitBranch == "") {
-      logger.w("You don't define a specific branch, using current branch");
+      logger.w("You don't define an specific branch, using current branch");
       _appConfig.gitBranch = await _getGitCurrentBranch();
     }
 

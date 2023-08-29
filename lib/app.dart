@@ -15,7 +15,6 @@ Future<void> runApp(List<String> arguments) async {
   );
 
   await repoService.setup();
-  repoService.dispose();
 
   final kubeConfigService = KubeConfigService(appConfig);
   kubeConfigService

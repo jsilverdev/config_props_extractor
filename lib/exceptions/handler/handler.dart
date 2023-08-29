@@ -1,7 +1,9 @@
+import 'dart:async';
+
 import '../../logger/app_logger.dart';
 import '../exceptions.dart';
 
-Future<void> handle(Function function) async {
+Future<void> handle(FutureOr<void> Function() function) async {
   try {
     await function();
   } on AppException catch (e) {
