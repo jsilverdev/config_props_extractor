@@ -4,7 +4,9 @@ import 'package:config_props_extractor/constants/constants.dart';
 import 'package:config_props_extractor/exceptions/exceptions.dart';
 import 'package:config_props_extractor/services/repo_service.dart';
 import 'package:config_props_extractor/services/shell_service.dart';
+import 'package:config_props_extractor/utils/string_utils.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:process_run/process_run.dart';
 import 'package:test/test.dart';
 
 import '../helpers/mocks.dart';
@@ -50,8 +52,17 @@ void main() {
       );
       when(() => mockAppConfig.gitForceRemote).thenReturn(gitForceRemote);
       when(() => mockAppConfig.gitSSLEnabled).thenReturn(true);
-      when(() => mockShellService.runScript(any())).thenAnswer(
+      when(() => mockShellService.runScript(GIT_BRANCH_SHOW_CURRENT)).thenAnswer(
         (_) async => [ProcessResult(pid, exitCode, branch, stderr)],
+      );
+      when(() => mockShellService.runScript(GIT_CHECKOUT.format([branch]))).thenAnswer(
+        (_) async => [],
+      );
+      when(() => mockShellService.runScript(GIT_REMOTE_HARD_RESET.format([branch, ""]))).thenAnswer(
+        (_) async => [],
+      );
+      when(() => mockShellService.runScript(GIT_TOP_LEVEL_PATH)).thenAnswer(
+        (_) async => [ProcessResult(pid, exitCode, path, stderr)],
       );
 
       // act
@@ -70,7 +81,7 @@ void main() {
       () async => await testSetup(
         isBranchDefined: true,
         gitForceRemote: true,
-        runScriptTimes: 1,
+        runScriptTimes: 2,
       ),
     );
 
@@ -79,7 +90,7 @@ void main() {
       () async => testSetup(
         isBranchDefined: true,
         gitForceRemote: true,
-        runScriptTimes: 1,
+        runScriptTimes: 2,
       ),
     );
 
@@ -88,7 +99,7 @@ void main() {
       () async => testSetup(
         isBranchDefined: false,
         gitForceRemote: false,
-        runScriptTimes: 2,
+        runScriptTimes: 3,
       ),
     );
 
@@ -121,6 +132,36 @@ void main() {
         () => repoService.setup(),
         // assert
         throwsA(isA<ExecutableNotFoundInPathException>()),
+      );
+    });
+
+
+    test("The path is invalid git repository", () {
+      // arrange
+      when(() => mockAppConfig.gitRepoPath).thenReturn("/path/to/sub/folder");
+      when(() => mockShellService.runScript(GIT_TOP_LEVEL_PATH)).thenAnswer(
+        (_) async => [ProcessResult(pid, exitCode, "/path/to/sub", stderr)],
+      );
+
+      expect(
+        // act
+        () => repoService.setup(),
+        // assert
+        throwsA(isA<IncorrectTopLevelGitPathException>()),
+      );
+    });
+
+    test("The path is not in the top-level of the git repository", () {
+      // arrange
+      when(() => mockAppConfig.gitRepoPath).thenReturn("/path/to/folder");
+      when(() => mockShellService.runScript(GIT_TOP_LEVEL_PATH))
+      .thenAnswer((_) async => throw ShellException("exception", null));
+
+      expect(
+        // act
+        () => repoService.setup(),
+        // assert
+        throwsA(isA<InvalidValidGitPathException>()),
       );
     });
   });

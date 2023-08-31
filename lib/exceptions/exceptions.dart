@@ -17,9 +17,17 @@ class ExecutableNotFoundInPathException extends AppException {
 class ConfigPropertyMissingException extends AppException {
   const ConfigPropertyMissingException({
     required final String property,
-  }) : super('The config property "$property" is not defined');
+  }) : super('"$property" property is not defined int the .env file');
 }
 
-abstract class YamlException extends AppException {
-  YamlException(super._message);
+class InvalidValidGitPathException extends AppException {
+  const InvalidValidGitPathException({
+    required final String path
+  }) : super('"$path" path is and invalid git repository');
+}
+
+class IncorrectTopLevelGitPathException extends AppException {
+  const IncorrectTopLevelGitPathException({
+    required final String path
+  }) : super('"$path" path is not in the top level of the git repository');
 }

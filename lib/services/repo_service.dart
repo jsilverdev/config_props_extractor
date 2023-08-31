@@ -3,8 +3,10 @@ import 'package:process_run/process_run.dart';
 import '../config/app_config.dart';
 import '../constants/constants.dart' as constants;
 import '../config/logger.dart';
+import '../exceptions/exceptions.dart';
 import '../utils/string_utils.dart';
 import 'shell_service.dart';
+import 'package:path/path.dart' as path;
 
 class RepoService {
   final AppConfig _appConfig;
@@ -36,14 +38,28 @@ class RepoService {
     );
   }
 
+  Future<void> _validateCurrentPathIsGitRepo() async {
+    try {
+      final res = await _shellService.runScript(constants.GIT_TOP_LEVEL_PATH);
+      if (!path.equals(_appConfig.gitRepoPath, res.outLines.first)) {
+        throw IncorrectTopLevelGitPathException(
+          path: _appConfig.gitRepoPath,
+        );
+      }
+    } on ShellException {
+      throw InvalidValidGitPathException(
+          path: _appConfig.gitRepoPath,
+      );
+    }
+  }
+
   Future<void> setup() async {
     log.i("Checking properties for: ${_appConfig.gitRepoPath}");
     _shellService.moveShellTo(_appConfig.gitRepoPath);
 
-    log.i("Checking if {} is installed".format([constants.GIT]));
     _shellService.checkExecutable(constants.GIT);
 
-    //TODO: Validate if is a git folder
+    await _validateCurrentPathIsGitRepo();
 
     if (_appConfig.gitBranch == "") {
       log.w("You don't define an specific branch, using current branch");
