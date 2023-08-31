@@ -42,7 +42,13 @@ void main() {
         kubeConfigService.loadConfigDatas();
         // assert
         expect(testData, isNotEmpty);
-        expect(testData, {"key": "value", "secret_key": "value"});
+        expect(testData, {
+          "key": "value",
+          "empty_key": null,
+          "null_key": null,
+          "secret_key": "value",
+          "another_key": null,
+        });
       },
     );
   });
@@ -75,7 +81,8 @@ void main() {
 
       // assert
       expect(testFile.existsSync(), true);
-      expect(testFile.readAsStringSync(), "# Created at: 2022-02-02 0:00:00\n\n");
+      expect(
+          testFile.readAsStringSync(), "# Created at: 2022-02-02 0:00:00\n\n");
     }
 
     test(

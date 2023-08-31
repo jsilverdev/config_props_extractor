@@ -7,6 +7,6 @@ enum KubeConfigKind {
 
   const KubeConfigKind({
     required this.name,
-    required this.isOpaque
+    required this.isOpaque,
   });
 }

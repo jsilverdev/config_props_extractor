@@ -16,7 +16,7 @@ class KubeConfigService {
   KubeConfigService(
     this._appConfig, {
     KubeConfigData? data,
-  })  : _data = data ?? {};
+  }) : _data = data ?? {};
 
   void loadConfigDatas() {
     _loadConfigData(

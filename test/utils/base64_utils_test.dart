@@ -20,10 +20,15 @@ void main() {
       () async {
         // arrange
         final badEncoded = "ZXhwZWN0ZWQ=1d1d12sds";
+        bool executed = false;
         // act
-        final result = tryBase64Decode(badEncoded);
+        final result = tryBase64Decode(
+          badEncoded,
+          onFailed: () => executed = true,
+        );
         // assert
         expect(result, isNull);
+        expect(executed, equals(true));
       },
     );
   });

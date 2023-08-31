@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:config_props_extractor/utils/yaml_utils.dart';
 import 'package:test/test.dart';
 import 'package:yaml_magic/yaml_magic.dart';
@@ -20,43 +22,23 @@ void main() {
     },
   );
 
-  group('YamlMagicExtension', () {
-    late YamlMagic yamlMagic;
-
-    setUp(() {
-      yamlMagic = YamlMagic.fromString(
-        content: "key: value",
-        path: "path/to/file.yaml",
-      );
-    });
-
-    test(
-      'Should return a boolean if a key exists or not for a YamlMagic',
-      () async {
-        // act
-        bool keyExists1 = yamlMagic.keyExists("key");
-        bool keyExists2 = yamlMagic.keyExists("anotherKey");
-        // assert
-        expect(keyExists1, equals(true));
-        expect(keyExists2, equals(false));
-      },
-    );
-
-    test(
-      'Should returns a boolean if the key have the value or not for a YamlMagic',
-      () async {
-        // act
-        bool keyValueExists1 = yamlMagic.keyValueExists("key", "value");
-        bool keyValueExists2 = yamlMagic.keyValueExists("key", "anotherValue");
-        bool keyValueExists3 = yamlMagic.keyValueExists(
-          "anotherKey",
-          "anotherValue",
-        );
-        // assert
-        expect(keyValueExists1, equals(true));
-        expect(keyValueExists2, equals(false));
-        expect(keyValueExists3, equals(false));
-      },
-    );
-  });
+  test(
+    'Should Convert YamlMagic From File',
+    () async {
+      // arrange
+      final file = File("test/_data/configs/config_map.yaml");
+      // act
+      YamlMagic yamlMagic = fromFileToYamlMagic(file);
+      // assert
+      expect(yamlMagic, isNotNull);
+      expect(yamlMagic.originalMap, {
+        "kind": "ConfigMap",
+        "data": {
+          "key": "value",
+          "empty_key": null,
+          "null_key": null,
+        }
+      });
+    },
+  );
 }

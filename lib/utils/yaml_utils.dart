@@ -9,19 +9,9 @@ bool hasYamlExtension(String filePath) {
   return _yamlExtensions.contains(path.extension(filePath).toLowerCase());
 }
 
-YamlMagic toYamlMagic(File file) {
+YamlMagic fromFileToYamlMagic(File file) {
   return YamlMagic.fromString(
     content: file.readAsStringSync(),
     path: file.path,
   );
-}
-
-extension YamlMagicExtension on YamlMagic {
-  bool keyExists(String key) {
-    return originalMap[key] != null;
-  }
-
-  bool keyValueExists(String key, dynamic value) {
-    return originalMap[key] == value;
-  }
 }

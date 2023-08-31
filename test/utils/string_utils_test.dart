@@ -29,7 +29,6 @@ void main() {
   });
 
   group('format', () {
-
     test(
       'Should interpolate with only {}',
       () async {
@@ -43,7 +42,6 @@ void main() {
       },
     );
 
-
     test(
       'Should interpolate with numbers {n}',
       () async {
@@ -56,6 +54,5 @@ void main() {
         expect(actual, equals("value1 value2 value3"));
       },
     );
-
   });
 }

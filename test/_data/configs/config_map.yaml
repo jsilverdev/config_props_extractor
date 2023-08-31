@@ -1,3 +1,5 @@
 kind: ConfigMap
 data:
   key: value
+  empty_key:
+  null_key: null
