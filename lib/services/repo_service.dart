@@ -2,7 +2,7 @@ import 'package:process_run/process_run.dart';
 
 import '../config/app_config.dart';
 import '../constants/constants.dart' as constants;
-import '../logger/app_logger.dart';
+import '../config/logger.dart';
 import '../utils/string_utils.dart';
 import 'shell_service.dart';
 
@@ -37,20 +37,20 @@ class RepoService {
   }
 
   Future<void> setup() async {
-    logger.i("Checking properties for: ${_appConfig.gitRepoPath}");
+    log.i("Checking properties for: ${_appConfig.gitRepoPath}");
     _shellService.moveShellTo(_appConfig.gitRepoPath);
 
-    logger.i("Checking if {} is installed".format([constants.GIT]));
+    log.i("Checking if {} is installed".format([constants.GIT]));
     _shellService.checkExecutable(constants.GIT);
 
     //TODO: Validate if is a git folder
 
     if (_appConfig.gitBranch == "") {
-      logger.w("You don't define an specific branch, using current branch");
+      log.w("You don't define an specific branch, using current branch");
       _appConfig.gitBranch = await _getGitCurrentBranch();
     }
 
-    logger.i('Using branch "{}"'.format(
+    log.i('Using branch "{}"'.format(
       [_appConfig.gitBranch],
     ));
     if (!_appConfig.gitForceRemote) {
@@ -58,7 +58,7 @@ class RepoService {
       return;
     }
 
-    logger.i('Making hard reset of branch {}'.format(
+    log.i('Making hard reset of branch {}'.format(
       [_appConfig.gitBranch],
     ));
     await _gitRemoteHardReset(_appConfig.gitBranch);

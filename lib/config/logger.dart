@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:logger/logger.dart';
 
-final logger = Logger(
+final log = Logger(
   level: Level.all,
   filter: ProductionFilter(),
   printer: stdout.hasTerminal

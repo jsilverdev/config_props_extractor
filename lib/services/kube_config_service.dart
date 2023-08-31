@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as path;
 
 import '../config/app_config.dart';
-import '../logger/app_logger.dart';
+import '../config/logger.dart';
 import '../models/kube_kind.dart';
 import '../models/properties_string_config.dart';
 import '../utils/date_utils.dart';
@@ -53,7 +53,7 @@ class KubeConfigService {
       ..writeStringSync(stringValue)
       ..close();
 
-    logger.t("Saved file at: ${file.path}");
+    log.t("Saved file at: ${file.path}");
   }
 
   File _createFile(String fileName) {

@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import '../logger/app_logger.dart';
+import '../config/logger.dart';
 import '../models/kube_kind.dart';
 import '../models/properties_string_config.dart';
 import 'base64_utils.dart';
@@ -60,7 +60,7 @@ KubeConfigData _decodeValues(KubeConfigData data) {
         ? null
         : tryBase64Decode(
             value,
-            onFailed: () => logger.w('The "$key" key can\'t be decoded'),
+            onFailed: () => log.w('The "$key" key can\'t be decoded'),
           );
     return MapEntry(key, decodedValue);
   });
