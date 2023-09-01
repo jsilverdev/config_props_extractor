@@ -7,3 +7,7 @@ coverage/
 .git_repos/
 properties_file*.txt
 application-local.properties
+
+# dlcov coverage
+test/dlcov_references_test.dart
+dlcov.log
