@@ -6,6 +6,10 @@ on:
       version_number:
         description: "Version number (example: 1.0.0)"
         required: true
+      for_latest:
+        type: boolean
+        default: false
+
   push:
     branches: ["main"]
     paths:
@@ -98,7 +102,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          ref: ${{ needs.last_version.outputs.current_sha }}
+          ref: ${{ github.event.inputs.for_latest == 'true' && 'latest' || needs.last_version.outputs.current_sha }}
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
       - name: Restore Cache dependencies
@@ -142,7 +146,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          ref: ${{ needs.last_version.outputs.current_sha }}
+          ref: ${{ github.event.inputs.for_latest == 'true' && 'latest' || needs.last_version.outputs.current_sha }}
 
       - name: Download compiled files
         uses: actions/download-artifact@v3
