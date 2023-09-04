@@ -1,11 +1,10 @@
 name: config_props_extractor
 description: A command-line application to get properties from ConfigMaps and Secrets
-version: 1.0.0-rc4
+version: 1.0.0
 # repository: https://github.com/my_org/my_repo
 
 environment:
   sdk: ^3.0.0
-
 # Add regular dependencies here.
 dependencies:
   clock: ^1.1.1
@@ -15,7 +14,6 @@ dependencies:
   path: ^1.8.3
   process_run: ^0.13.0
   yaml_magic: ^1.0.5
-
 dev_dependencies:
   lints: ^2.0.0
   mocktail: ^1.0.0
