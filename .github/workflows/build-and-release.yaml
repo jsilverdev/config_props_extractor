@@ -103,7 +103,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.inputs.for_latest == 'true' && 'latest' || needs.last_version.outputs.current_sha }}
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
       - name: Restore Cache dependencies
         id: restore-cache-deps
@@ -147,6 +146,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.inputs.for_latest == 'true' && 'latest' || needs.last_version.outputs.current_sha }}
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
       - name: Download compiled files
         uses: actions/download-artifact@v3
