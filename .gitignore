@@ -12,6 +12,3 @@ application-local.properties
 test/dlcov_references_test.dart
 dlcov.log
 
-run-linux
-run-macos
-run-win.exe
