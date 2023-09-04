@@ -105,6 +105,7 @@ jobs:
 
       - name: Compile executable
         run: |
+          mkdir binaries
           dart compile exe bin/main.dart -o binaries/run-app${{ matrix.binary_extension }}
 
       - name: Upload compiled files
