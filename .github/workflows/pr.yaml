@@ -69,10 +69,13 @@ jobs:
           dart pub global activate dlcov "<5.0.0"
           dart pub global activate coverage "<2.0.0"
 
-      - name: Run tests and coverage
+      - name: Run tests
         run: |
-          dart pub global run dlcov --coverage=$MIN_COVERAGE --include-untested-files=true \
-          --lcov-gen="dart pub global run coverage:test_with_coverage --function-coverage --branch-coverage"
+          test_with_coverage --function-coverage --branch-coverage
+
+      - name: Analyze coverage
+        run: |
+          dlcov --coverage=$MIN_COVERAGE --include-untested-files=true
 
 
 
