@@ -13,6 +13,46 @@ on:
         required: true
 
 jobs:
+  last_version:
+    runs-on: ubuntu-latest
+    outputs:
+      version_number: ${{ steps.get_latest_version.outputs.version_number }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Get latest version number
+        id: get_latest_version
+        run: |
+          if [[ -n "${{ github.event.inputs.version_number }}" ]]; then
+            VERSION_NUMBER="${{ github.event.inputs.version_number }}"
+          else
+            VERSION_NUMBER=$(grep -m 1 -oP '## \[\d+\.\d+\.\d+(-\S+)?\]' CHANGELOG.md | sed 's/## \[\(.*\)\]/\1/')
+          fi
+          echo "version_number=${VERSION_NUMBER}" >> $GITHUB_OUTPUT
+
+      - name: Validate version entry on CHANGELOG.md
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          changelog_entry=$(grep -E "^##\s+\[${{ steps.get_latest_version.outputs.version_number }}\]" CHANGELOG.md)
+          if [ -z "$changelog_entry" ]; then
+            echo "No changelog entry found for version ${{ steps.get_latest_version.outputs.version_number }} in CHANGELOG.md"
+            exit 1
+          fi
+
+      - name: Update version number
+        uses: mikefarah/yq@master
+        with:
+          cmd: yq -i '.version="${{ steps.get_latest_version.outputs.version_number }}"' pubspec.yaml
+
+      - name: Commit new version
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add pubspec.yaml
+          git commit -m "${{ steps.get_latest_version.outputs.version_number }}" -m $'\nskip-checks: true' --cleanup=verbatim
+          git push origin main
+
   build:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -30,6 +70,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          ref: main
 
       - name: Restore Cache dependencies
         id: restore-cache-deps
@@ -64,32 +106,14 @@ jobs:
           retention-days: 1
 
   release:
-    needs: build
+    needs: [build, last_version]
     runs-on: ubuntu-latest
     if: ${{ needs.build.result == 'success' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
-      - name: Get latest version number
-        id: get_latest_version
-        run: |
-          if [[ -n "${{ github.event.inputs.version_number }}" ]]; then
-            VERSION_NUMBER="${{ github.event.inputs.version_number }}"
-          else
-            VERSION_NUMBER=$(grep -m 1 -oP '## \[\d+\.\d+\.\d+(-\S+)?\]' CHANGELOG.md | sed 's/## \[\(.*\)\]/\1/')
-          fi
-          echo "version_number=${VERSION_NUMBER}" >> $GITHUB_OUTPUT
-
-
-      - name: Validate version entry on CHANGELOG.md
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-          changelog_entry=$(grep -E "^##\s+\[${{ steps.get_latest_version.outputs.version_number }}\]" CHANGELOG.md)
-          if [ -z "$changelog_entry" ]; then
-            echo "No changelog entry found for version ${{ steps.get_latest_version.outputs.version_number }} in CHANGELOG.md"
-            exit 1
-          fi
+        with:
+          ref: main
 
       - name: Download compiled files
         uses: actions/download-artifact@v3
@@ -104,9 +128,9 @@ jobs:
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git checkout -b ${{ steps.get_latest_version.outputs.version_number }}
+          git checkout -b ${{ needs.last_version.outputs.version_number }}
           git add .
-          git commit -m "Add compiled files" -m $'\nskip-checks: true' --cleanup=verbatim
-          git push --set-upstream origin ${{ steps.get_latest_version.outputs.version_number }}
-          git tag v${{ steps.get_latest_version.outputs.version_number }}
+          git commit -m "Add compiled files" --cleanup=verbatim
+          git push --set-upstream origin ${{ needs.last_version.outputs.version_number }}
+          git tag v${{ needs.last_version.outputs.version_number }}
           git push origin --tags
