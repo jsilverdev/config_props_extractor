@@ -17,6 +17,7 @@ dependencies:
   yaml_magic: ^1.0.5
 
 dev_dependencies:
+  graphql: ^5.1.2
   lints: ^2.0.0
   mocktail: ^1.0.0
   test: ^1.21.0
