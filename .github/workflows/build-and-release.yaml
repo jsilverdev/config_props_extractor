@@ -190,6 +190,10 @@ jobs:
           version: ${{ needs.last_version.outputs.version_number }}
           path: ./CHANGELOG.md
 
+      - name: Return to versioned branch
+        if: github.event_name == 'workflow_dispatch'
+        run: git checkout ${{ needs.last_version.outputs.version_number }}
+
       - name: Create and publish release
         uses: ncipollo/release-action@v1
         with:
