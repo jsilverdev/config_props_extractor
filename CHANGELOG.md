@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning].
 
 <!-- Versions -->
 [unreleased]: https://github.com/jsilverdev/config_props_extractor/compare/latest...HEAD
+[1.1.0-rc1]: https://github.com/jsilverdev/config_props_extractor/compare/20b9c43ca34750283b567afaf96cc588e766f901...v1.1.0-rc1
 [1.0.0]: https://github.com/jsilverdev/config_props_extractor/compare/e31f2c8cdf0cde3b42d38d78cef492b8e3bba99a...v1.0.0
 [1.0.0-rc4]: https://github.com/jsilverdev/config_props_extractor/compare/a42c67bb7a3e4de6db647d2bd9eb374c264dcc54...v1.0.0-rc4
 [1.0.0-rc2]: https://github.com/jsilverdev/config_props_extractor/compare/b73a358adaba2b88f262b1e21cb597151a36a96e...v1.0.0-rc2

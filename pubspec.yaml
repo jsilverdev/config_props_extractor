@@ -1,6 +1,6 @@
 name: config_props_extractor
 description: A command-line application to get properties from ConfigMaps and Secrets
-version: 1.0.0
+version: 1.1.0-rc1
 # repository: https://github.com/my_org/my_repo
 
 environment:
