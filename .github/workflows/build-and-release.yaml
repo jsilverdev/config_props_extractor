@@ -169,9 +169,11 @@ jobs:
           git config user.email github-actions@github.com
           git checkout -b ${{ needs.last_version.outputs.version_number }}
           git add .
-          git commit -m "Add compiled files" --cleanup=verbatim
+          git status
+          git commit -m "Add compiled files"
+          git status
           git tag v${{ needs.last_version.outputs.version_number }}
-          git push origin --tags
+          git push origin v${{ needs.last_version.outputs.version_number }}
 
       - name: Switch to latest main branch (to get latest CHANGELOG.md)
         if: github.event_name == 'workflow_dispatch'
