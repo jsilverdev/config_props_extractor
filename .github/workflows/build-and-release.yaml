@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       version_number:
-        description: 'Version number (example: 1.0.0)'
+        description: "Version number (example: 1.0.0)"
         required: true
 
 jobs:
@@ -17,11 +17,12 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version_number: ${{ steps.get_latest_version.outputs.version_number }}
+      current_sha: ${{ steps.current_sha.outputs.sha }}
     steps:
-      - name: Fail if branch is not main
-        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
+      - name: Fail if branch is not main or tag latest
+        if: github.event_name == 'workflow_dispatch' && (github.ref != 'refs/heads/main' || github.ref != 'refs/tags/latest')
         run: |
-          echo "This workflow should not be triggered with workflow_dispatch on a branch other than main"
+          echo "This workflow should not be triggered with workflow_dispatch on a branch other than main or tag latest"
           exit 1
 
       - name: Checkout code
@@ -48,27 +49,38 @@ jobs:
             exit 1
           fi
 
-      - name: Check version number on pubpec.yaml
-        id: pubspec_version_number
-        if: github.event_name == 'workflow_dispatch'
-        uses: mikefarah/yq@master
-        with:
-          cmd: yq .version pubspec.yaml
+      - name: Increase version on CHANGELOG.md
+        if: github.event_name != 'workflow_dispatch'
+        run: |
+          new_version="${{ steps.get_latest_version.outputs.version_number }}"
+          unreleased_link=$(grep -m 1 -oP '\[unreleased\]: \Khttps:\/\/github\.com\/[^.]*\/[^.]*\/compare\/' "CHANGELOG.md")
+          sha_latest=$(git rev-list -n 1 latest)
+          new_version_link="[$new_version]: ${unreleased_link}$sha_latest...v$new_version"
+          sed -i "/\[unreleased\]: .*/a $new_version_link" "CHANGELOG.md"
 
       - name: Update version number
-        if: steps.pubspec_version_number.outputs.result != steps.get_latest_version.outputs.version_number
+        if: github.event_name != 'workflow_dispatch'
         uses: mikefarah/yq@master
         with:
           cmd: yq -i '.version="${{ steps.get_latest_version.outputs.version_number }}"' pubspec.yaml
 
-      - name: Commit new version
-        if: steps.pubspec_version_number.outputs.result != steps.get_latest_version.outputs.version_number
+      - name: Commit new version and update latest tag
+        if: github.event_name != 'workflow_dispatch'
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add pubspec.yaml
+          git add .
           git commit -m "${{ steps.get_latest_version.outputs.version_number }}" -m $'\nskip-checks: true' --cleanup=verbatim
-          git push origin main
+          git tag -d latest
+          git push origin :refs/tags/latest
+          git tag latest
+          git push origin main --tags
+
+      - name: Get current SHA
+        id: current_sha
+        run: |
+          CURRENT_SHA=$(git rev-parse HEAD)
+          echo "sha=${CURRENT_SHA}" >> $GITHUB_OUTPUT
 
   build:
     needs: [last_version]
@@ -92,7 +104,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          ref: main
+          ref: ${{ needs.last_version.outputs.current_sha }}
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
       - name: Restore Cache dependencies
@@ -136,7 +148,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          ref: main
+          ref: ${{ needs.last_version.outputs.current_sha }}
 
       - name: Download compiled files
         uses: actions/download-artifact@v3
@@ -162,3 +174,28 @@ jobs:
           git commit -m "Add compiled files" --cleanup=verbatim
           git tag v${{ needs.last_version.outputs.version_number }}
           git push origin --tags
+
+      - name: Switch to latest main branch (to get latest CHANGELOG.md)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git switch main
+
+      - name: Get Changelog Entry
+        id: changelog_reader
+        uses: mindsers/changelog-reader-action@v2
+        with:
+          validation_level: warn
+          validation_depth: 5
+          version: ${{ needs.last_version.outputs.version_number }}
+          path: ./CHANGELOG.md
+
+      - name: Create and publish release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: v${{ needs.last_version.outputs.version_number }}
+          artifacts: "binaries/**"
+          body: ${{ steps.changelog_reader.outputs.changes }}
+          prerelease: ${{ steps.changelog_reader.outputs.status == 'prereleased' }}
+          draft: ${{ steps.changelog_reader.outputs.status == 'unreleased' }}

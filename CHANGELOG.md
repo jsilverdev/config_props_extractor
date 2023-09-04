@@ -1,3 +1,49 @@
-## [1.0.0]
+# Changelog
 
-- Initial version.
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog],
+and this project adheres to [Semantic Versioning].
+
+## [Unreleased]
+
+- /
+
+## [1.0.0] - 2023-09-04
+
+### Changed
+
+- Upgraded dependencies
+
+
+## [1.0.0-rc4] - 2023-08-31
+
+### Added
+
+- Now can validate if the path is a git repository and if is in the top level
+- If a value is null his value has empty on .txt and .properties generated files
+
+### Changed
+
+- The null and/or empty values now are added to the generated files
+
+## [1.0.0-rc2] - 2023-08-29
+
+### Fixed
+
+- Fix some tests
+
+## [1.0.0-rc1] - 2023-08-29
+
+- initial release
+
+<!-- Links -->
+[keep a changelog]: https://keepachangelog.com/en/1.0.0/
+[semantic versioning]: https://semver.org/spec/v2.0.0.html
+
+<!-- Versions -->
+[unreleased]: https://github.com/jsilverdev/config_props_extractor/compare/latest...HEAD
+[1.0.0]: https://github.com/jsilverdev/config_props_extractor/compare/e31f2c8cdf0cde3b42d38d78cef492b8e3bba99a...v1.0.0
+[1.0.0-rc4]: https://github.com/jsilverdev/config_props_extractor/compare/a42c67bb7a3e4de6db647d2bd9eb374c264dcc54...v1.0.0-rc4
+[1.0.0-rc2]: https://github.com/jsilverdev/config_props_extractor/compare/b73a358adaba2b88f262b1e21cb597151a36a96e...v1.0.0-rc2
+[1.0.0-rc1]: https://github.com/jsilverdev/config_props_extractor/releases/tag/v1.0.0-rc1
