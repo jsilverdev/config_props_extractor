@@ -187,7 +187,7 @@ jobs:
           git push origin v${{ needs.last_version.outputs.version_number }}
 
       - name: Switch to latest main branch (to get latest CHANGELOG.md)
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event.inputs.for_latest == 'true'
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
@@ -204,7 +204,7 @@ jobs:
           path: ./CHANGELOG.md
 
       - name: Return to versioned branch
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event.inputs.for_latest == 'true'
         run: git checkout ${{ needs.last_version.outputs.version_number }}
 
       - name: Rename files
