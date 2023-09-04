@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning].
 
 - /
 
+## [1.1.0-rc1] - 2023-09-04
+
+### Added
+
+- Test for logger instance
+
+
 ## [1.0.0] - 2023-09-04
 
 ### Changed
