@@ -24,7 +24,7 @@ jobs:
       current_sha: ${{ steps.current_sha.outputs.sha }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
@@ -100,7 +100,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.inputs.for_latest == 'true' && 'latest' || needs.last_version.outputs.current_sha }}
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
@@ -144,7 +144,7 @@ jobs:
     if: ${{ needs.build.result == 'success' }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.inputs.for_latest == 'true' && 'latest' || needs.last_version.outputs.current_sha }}
 
