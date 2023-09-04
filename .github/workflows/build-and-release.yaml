@@ -11,6 +11,11 @@ on:
       version_number:
         description: 'Version number (example: 1.0.0)'
         required: true
+      with_commit:
+        description: 'If i wanna commit'
+        type: boolean
+        default: true
+        required: true
 
 jobs:
   last_version:
@@ -33,7 +38,7 @@ jobs:
           fi
           echo "version_number=${VERSION_NUMBER}" >> $GITHUB_OUTPUT
 
-      - name: Validate version entry on CHANGELOG.md
+      - name: Check if entry exists on CHANGELOG.md
         if: github.event_name == 'workflow_dispatch'
         run: |
           changelog_entry=$(grep -E "^##\s+\[${{ steps.get_latest_version.outputs.version_number }}\]" CHANGELOG.md)
@@ -48,6 +53,7 @@ jobs:
           cmd: yq -i '.version="${{ steps.get_latest_version.outputs.version_number }}"' pubspec.yaml
 
       - name: Commit new version
+        if: github.event.inputs.with_commit == 'true'
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
@@ -99,14 +105,14 @@ jobs:
 
       - name: Compile executable
         run: |
-          dart compile exe bin/main.dart -o run-app${{ matrix.binary_extension }}
+          dart compile exe bin/main.dart -o binaries/run-app${{ matrix.binary_extension }}
 
       - name: Upload compiled files
         if: ${{ job.status == 'success' }}
         uses: actions/upload-artifact@v3
         with:
           name: compiled-files
-          path: run${{ matrix.binary_extension }}
+          path: binaries/run-app${{ matrix.binary_extension }}
           retention-days: 1
 
   release:
@@ -123,10 +129,13 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: compiled-files
-          path: .
+          path: binaries/
 
       - name: Make executable run binary files
-        run: find . -type f -name 'run-app*' -exec chmod +x {} \;
+        run: find binaries/ -type f -name 'run-app*' -exec chmod +x {} \;
+
+      - name: Move executables to root path
+        run: mv binaries/* .
 
       - name: Create and push branch (and tag)
         run: |
