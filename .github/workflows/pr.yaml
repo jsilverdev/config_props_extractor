@@ -26,7 +26,7 @@ jobs:
           LATEST_TAG=$(git -c 'versionsort.suffix=-' ls-remote --tags --sort='v:refname' --refs origin "refs/tags/*" | awk '{print substr($2, 11)}' | tail -n1)
           echo "tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
 
-      - name: Get latest version of CHANGELOG.md
+      - name: Get latest version number of CHANGELOG.md
         id: get_latest_changelog_version
         run: |
           LATEST_CHANGELOG_VERSION_NUMBER=$(grep -m 1 -oP '## \[\d+\.\d+\.\d+(-\S+)?\]' CHANGELOG.md | sed 's/## \[\(.*\)\]/\1/')

@@ -1,0 +1,112 @@
+name: Build and Release
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "**.dart"
+      - "pubspec.lock"
+  workflow_dispatch:
+    inputs:
+      version_number:
+        description: 'Version number (example: 1.0.0)'
+        required: true
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            binary_extension: "-linux"
+            pub_cache: "~/.pub-cache"
+          - os: windows-latest
+            binary_extension: ".exe"
+            pub_cache: "~\\AppData\\Local\\Pub\\Cache"
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Restore Cache dependencies
+        id: restore-cache-deps
+        uses: actions/cache/restore@v3
+        with:
+          key: ${{ runner.os }}-pub-cache-${{ hashFiles('**/pubspec.lock') }}
+          path: ${{ matrix.pub_cache }}
+
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Save Cache dependencies
+        uses: actions/cache/save@v3
+        if: steps.restore-cache-deps.outputs.cache-hit != 'true'
+        with:
+          key: ${{ steps.restore-cache-deps.outputs.cache-primary-key }}
+          path: ${{ matrix.pub_cache }}
+
+      - name: Compile executable
+        run: |
+          dart compile exe bin/main.dart -o run-app${{ matrix.binary_extension }}
+
+      - name: Upload compiled files
+        if: ${{ job.status == 'success' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: compiled-files
+          path: run${{ matrix.binary_extension }}
+          retention-days: 1
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: ${{ needs.build.result == 'success' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Get latest version number
+        id: get_latest_version
+        run: |
+          if [[ -n "${{ github.event.inputs.version_number }}" ]]; then
+            VERSION_NUMBER="${{ github.event.inputs.version_number }}"
+          else
+            VERSION_NUMBER=$(grep -m 1 -oP '## \[\d+\.\d+\.\d+(-\S+)?\]' CHANGELOG.md | sed 's/## \[\(.*\)\]/\1/')
+          fi
+          echo "version_number=${VERSION_NUMBER}" >> $GITHUB_OUTPUT
+
+
+      - name: Validate version entry on CHANGELOG.md
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          changelog_entry=$(grep -E "^##\s+\[${{ steps.get_latest_version.outputs.version_number }}\]" CHANGELOG.md)
+          if [ -z "$changelog_entry" ]; then
+            echo "No changelog entry found for version ${{ steps.get_latest_version.outputs.version_number }} in CHANGELOG.md"
+            exit 1
+          fi
+
+      - name: Download compiled files
+        uses: actions/download-artifact@v3
+        with:
+          name: compiled-files
+          path: .
+
+      - name: Make executable run binary files
+        run: find . -type f -name 'run-app*' -exec chmod +x {} \;
+
+      - name: Create and push branch (and tag)
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git checkout -b ${{ steps.get_latest_version.outputs.version_number }}
+          git add .
+          git commit -m "Add compiled files" -m $'\nskip-checks: true' --cleanup=verbatim
+          git push --set-upstream origin ${{ steps.get_latest_version.outputs.version_number }}
+          git tag v${{ steps.get_latest_version.outputs.version_number }}
+          git push origin --tags
