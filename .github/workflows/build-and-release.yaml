@@ -194,11 +194,20 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         run: git checkout ${{ needs.last_version.outputs.version_number }}
 
+      - name: Rename files
+        run: |
+          for file in ./run*; do
+            if [ -f "$file" ]; then
+                new_name="config_props_extractor_v${{needs.last_version.outputs.version_number}}-$(echo "$file" | cut -d'-' -f2)"
+                mv "$file" "$new_name"
+            fi
+          done
+
       - name: Create and publish release
         uses: ncipollo/release-action@v1
         with:
           tag: v${{ needs.last_version.outputs.version_number }}
-          artifacts: "run*,run*.exe"
+          artifacts: "config_props_extractor_v*,config_props_extractor_v*.exe"
           body: ${{ steps.changelog_reader.outputs.changes }}
           prerelease: ${{ steps.changelog_reader.outputs.status == 'prereleased' }}
           draft: ${{ steps.changelog_reader.outputs.status == 'unreleased' }}
