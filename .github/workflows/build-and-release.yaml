@@ -1,16 +1,16 @@
 name: Build and Release
 
 on:
-  push:
-    branches: ["main"]
-    paths:
-      - "**.dart"
-      - "pubspec.lock"
   workflow_dispatch:
     inputs:
       version_number:
         description: "Version number (example: 1.0.0)"
         required: true
+  push:
+    branches: ["main"]
+    paths:
+      - "**.dart"
+      - "pubspec.lock"
 
 jobs:
   last_version:
@@ -19,12 +19,6 @@ jobs:
       version_number: ${{ steps.get_latest_version.outputs.version_number }}
       current_sha: ${{ steps.current_sha.outputs.sha }}
     steps:
-      - name: Fail if branch is not main or tag latest
-        if: github.event_name == 'workflow_dispatch' && (github.ref != 'refs/heads/main' || github.ref != 'refs/tags/latest')
-        run: |
-          echo "This workflow should not be triggered with workflow_dispatch on a branch other than main or tag latest"
-          exit 1
-
       - name: Checkout code
         uses: actions/checkout@v3
         with:
