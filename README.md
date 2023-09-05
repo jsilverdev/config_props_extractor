@@ -29,8 +29,8 @@ To run this project, you will need to add the following environment variables to
 
 Before to run this app requires the following
 
-- [dart](https://dart.dev/get-dart) (or [flutter](https://docs.flutter.dev/get-started/install), which includes dart)
 - [git](https://git-scm.com/downloads)
+- [dart](https://dart.dev/get-dart) (or [flutter](https://docs.flutter.dev/get-started/install), which includes dart) (Optional)
 
 ### Steps:
 
@@ -58,7 +58,7 @@ Before to run this app requires the following
   GIT_REPO_PATH="path/to/config_folder_path"
 ```
 
-5. Install dependencies
+5. Install dependencies (if you don´t have dart go to the [Run binaries section](#run-binaries))
 
 ```bash
   dart pub get
@@ -68,6 +68,24 @@ Before to run this app requires the following
 
 ```bash
   dart run bin/main.dart
+```
+
+### Run binaries
+
+You can download the binaries on the [releases](https://github.com/jsilverdev/config_props_extractor/releases) section.
+
+Or git checkout to a desired tag (for example v1.0.0):
+
+```bash
+  git checkout tags/v1.0.0
+```
+
+And then run the binary for your platform
+
+```bash
+  .\run-win.exe
+  ./run-macos
+  ./run-linux
 ```
 
 ## Running Tests
