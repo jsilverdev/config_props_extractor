@@ -58,7 +58,7 @@ jobs:
             exit 1
           fi
 
-      - name: Increase version on CHANGELOG.md
+      - name: Add version link on CHANGELOG.md
         if: github.event.inputs.version_number == '' && github.event.inputs.ref == ''
         run: |
           new_version="${{ steps.get_latest_version.outputs.version_number }}"
@@ -178,7 +178,7 @@ jobs:
       - name: Remove ignore files from .gitignore
         run: sed -i '/run[^[:space:]]*/d' .gitignore
 
-      - name: Create and push branch (and tag)
+      - name: Create and push tag
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
