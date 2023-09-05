@@ -6,9 +6,9 @@ on:
       version_number:
         description: "Version number (example: 1.0.0), if is empty then use the last version of CHANGELOG.md"
         required: false
-      for_latest:
-        type: boolean
-        default: false
+      ref:
+        type: string
+        required: false
 
   push:
     branches: ["main"]
@@ -59,7 +59,7 @@ jobs:
           fi
 
       - name: Increase version on CHANGELOG.md
-        if: github.event.inputs.version_number == ''
+        if: github.event.inputs.version_number == '' && github.event.inputs.ref == ''
         run: |
           new_version="${{ steps.get_latest_version.outputs.version_number }}"
           unreleased_link=$(grep -m 1 -oP '\[unreleased\]: \Khttps:\/\/github\.com\/[^.]*\/[^.]*\/compare\/' "CHANGELOG.md")
@@ -68,13 +68,13 @@ jobs:
           sed -i "/\[unreleased\]: .*/a $new_version_link" "CHANGELOG.md"
 
       - name: Update version number
-        if: github.event.inputs.version_number == ''
+        if: github.event.inputs.version_number == '' && github.event.inputs.ref == ''
         uses: mikefarah/yq@master
         with:
           cmd: yq -i '.version="${{ steps.get_latest_version.outputs.version_number }}"' pubspec.yaml
 
       - name: Commit new version and update latest tag
-        if: github.event.inputs.version_number == ''
+        if: github.event.inputs.version_number == '' && github.event.inputs.ref == ''
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
@@ -88,7 +88,11 @@ jobs:
       - name: Get current SHA
         id: current_sha
         run: |
-          CURRENT_SHA=$(git rev-parse HEAD)
+          if [[ -n "${{ github.event.inputs.ref }}" ]]; then
+            CURRENT_SHA="${{ github.event.inputs.ref }}"
+          else
+            CURRENT_SHA=$(git rev-parse HEAD)
+          fi
           echo "sha=${CURRENT_SHA}" >> $GITHUB_OUTPUT
 
   build:
@@ -113,7 +117,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.for_latest == 'true' && 'latest' || needs.last_version.outputs.current_sha }}
+          ref: ${{ needs.last_version.outputs.current_sha }}
 
       - name: Restore Cache dependencies
         id: restore-cache-deps
@@ -156,7 +160,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.for_latest == 'true' && 'latest' || needs.last_version.outputs.current_sha }}
+          ref: ${{ needs.last_version.outputs.current_sha }}
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
       - name: Download compiled files
@@ -187,7 +191,7 @@ jobs:
           git push origin v${{ needs.last_version.outputs.version_number }}
 
       - name: Switch to latest main branch (to get latest CHANGELOG.md)
-        if: github.event.inputs.for_latest == 'true'
+        if: github.event.inputs.ref != ''
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
@@ -204,7 +208,7 @@ jobs:
           path: ./CHANGELOG.md
 
       - name: Return to versioned branch
-        if: github.event.inputs.for_latest == 'true'
+        if: github.event.inputs.ref != ''
         run: git checkout ${{ needs.last_version.outputs.version_number }}
 
       - name: Rename files
