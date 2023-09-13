@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning].
 
 - /
 
+## [1.2.0] - 2023-09-12
+
+### Changed
+
+- Now GIT_REPO_PATH variable can accept urls
+- This try to clone and if already exists this will use the related folder
+
+### Fixed
+
+-  Now if the some config path not exits, this will be skipped
+-  If checkout to an branch that not exists (local or remote), this stop the process and show a message
+-  If try to get the latest updates from remote and take many time then stop the process and show a message
+
+
 ## [1.1.0-rc1] - 2023-09-04
 
 ### Added

@@ -23,6 +23,8 @@ To run this project, you will need to add the following environment variables to
 
 `SECRETS_PATH` Optional. By default is 'secret'
 
+`MAX_DURATION_IN_MIN` Optional. For remote  By default is 3
+
 ## Run Locally
 
 ### Requirements:
@@ -113,7 +115,3 @@ If you want to see a way to visualize this in a html page, you can use lcov for 
 ```bash
   genhtml -o coverage coverage/lcov.info
 ```
-
-## Roadmap
-
-- Functionality for extract from a remote git repo
