@@ -1,10 +1,10 @@
 import 'package:config_props_extractor/config/app_config.dart';
-import 'package:config_props_extractor/exceptions/exceptions.dart';
+import 'package:config_props_extractor/constants/constants.dart' as constants;
+import 'package:config_props_extractor/exceptions/config_exceptions.dart';
 import 'package:config_props_extractor/models/config_property.dart';
 import 'package:config_props_extractor/utils/string_utils.dart';
 import 'package:dotenv/dotenv.dart';
 import 'package:test/test.dart';
-import 'package:config_props_extractor/constants/constants.dart' as constants;
 
 void main() {
   late DotEnv dotEnv;

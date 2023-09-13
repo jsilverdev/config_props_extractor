@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:config_props_extractor/exceptions/exceptions.dart';
+import 'package:config_props_extractor/exceptions/file_system_exceptions.dart';
 import 'package:config_props_extractor/services/shell_service.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:process_run/process_run.dart';
