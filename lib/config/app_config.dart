@@ -55,4 +55,6 @@ class AppConfig {
         ConfigProperty.secretsPath.value,
         () => constants.DEFAULT_CONFIG_SECRET_PATH,
       );
+
+  int get maxDurationInMin => _dotEnv[ConfigProperty.maxDurationInMin.value]?.toInt(3) ?? 3;
 }
