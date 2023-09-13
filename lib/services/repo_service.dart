@@ -1,10 +1,13 @@
+import 'dart:io';
+
 import 'package:path/path.dart' as path;
 import 'package:process_run/process_run.dart';
 
 import '../config/app_config.dart';
 import '../config/logger.dart';
 import '../constants/constants.dart' as constants;
-import '../exceptions/exceptions.dart';
+import '../exceptions/file_system_exceptions.dart';
+import '../exceptions/git_exceptions.dart';
 import '../utils/git_utils.dart';
 import '../utils/string_utils.dart';
 import 'shell_service.dart';
@@ -15,8 +18,13 @@ class RepoService {
 
   String _gitPath = "";
   bool _isCloned = false;
+  final String _defaultReposFolder;
 
-  RepoService(this._appConfig, this._shellService);
+  RepoService(
+    this._appConfig,
+    this._shellService, {
+    String? defaultParentFolder,
+  }) : _defaultReposFolder = defaultParentFolder ?? constants.REPOS_FOLDER;
 
   Future<void> _overrideConfigGitBranchWithCurrentOnEmpty() async {
     if (_appConfig.gitBranch != "") return;
@@ -36,8 +44,8 @@ class RepoService {
       await _shellService.runScript(
         constants.GIT_CHECKOUT.format([safeBranch]),
       );
-    } on ShellException {
-      throw InvalidGitLocalBranchException(branch: branch);
+    } on ShellException catch (e) {
+      throw GitShellException(e);
     }
   }
 
@@ -46,19 +54,22 @@ class RepoService {
     log.i('Getting latests changes for "$branch" branch');
     final duration = Duration(minutes: _appConfig.maxDurationInMin);
     try {
-      await _shellService.runScript(
+      await _shellService
+          .runScript(
         constants.GIT_REFRESH_BRANCH.format([
           branch,
           _getRemoteConfig(),
         ]),
-      ).timeout(duration, onTimeout: () {
-        _shellService.dispose();
-        throw GitRemoteToManyTimeException(
-          minutes: duration.inMinutes
-        );
-      });
-    } on ShellException {
-      throw InvalidGitRemoteBranchException(branch: branch);
+      )
+          .timeout(
+        duration,
+        onTimeout: () {
+          _shellService.dispose();
+          throw GitRemoteToManyTimeException(minutes: duration.inMinutes);
+        },
+      );
+    } on ShellException catch (e) {
+      throw GitShellException(e);
     }
   }
 
@@ -79,17 +90,17 @@ class RepoService {
           path: _gitPath,
         );
       }
-    } on ShellException {
-      throw InvalidValidGitPathException(
-        path: _gitPath,
-      );
+    } on ShellException catch (e) {
+      throw GitShellException(e);
     }
   }
 
-  Future<bool> _tryCloning({
+  Future<bool> _tryCloneInPath({
     required String gitUrl,
     required String gitPath,
   }) async {
+    if ((Directory(_gitPath).existsSync())) return false;
+
     try {
       await _shellService.runScript(constants.GIT_CLONE.format([
         gitUrl,
@@ -98,14 +109,12 @@ class RepoService {
       ]));
       log.i("Successfully cloned at: $gitPath");
       return true;
-    } on ShellException {
-      log.w('The path "$gitPath" exists and is not empty');
-      return false;
+    } on ShellException catch (e) {
+      throw GitShellException(e);
     }
   }
 
   Future<void> _validateGitUrlAndClone() async {
-
     final bool isGitUrl = isValidGitUrl(_appConfig.gitRepoPath);
 
     if (!isGitUrl) {
@@ -115,14 +124,21 @@ class RepoService {
     }
 
     _gitPath = path.absolute(
-      constants.REPOS_FOLDER,
+      _defaultReposFolder,
       extractGitPath(_appConfig.gitRepoPath),
     );
 
-    _isCloned = await _tryCloning(
+    _isCloned = await _tryCloneInPath(
       gitUrl: _appConfig.gitRepoPath,
       gitPath: _gitPath,
     );
+  }
+
+  void _validateGitPathAndMoveShell() {
+    if (!Directory(_gitPath).existsSync()) {
+      throw FolderNotFoundException(path: _gitPath);
+    }
+    _shellService.moveShellTo(_gitPath);
   }
 
   Future<String> setup() async {
@@ -132,7 +148,7 @@ class RepoService {
 
     await _validateGitUrlAndClone();
 
-    _shellService.moveShellTo(_gitPath);
+    _validateGitPathAndMoveShell();
     await _validateIfPathIsGitRepo();
     await _overrideConfigGitBranchWithCurrentOnEmpty();
 
@@ -151,7 +167,7 @@ class RepoService {
 
   String _getRemoteConfig() {
     final config = "{}".format([
-      !_appConfig.gitSSLEnabled ? constants.GIT_SSL_VERIFY_FALSE : ""
+      !_appConfig.gitSSLEnabled ? constants.GIT_SSL_VERIFY_FALSE : "",
     ]);
     if (config.isEmpty) return "";
     return "-c $config";

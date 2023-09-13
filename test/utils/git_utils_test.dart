@@ -2,20 +2,24 @@ import 'package:config_props_extractor/utils/git_utils.dart';
 import 'package:test/test.dart';
 
 void main() {
+  const validUrls = [
+    "https://fake.test/test/url/repo.git",
+    "http://fake.test/test/url/repo.git",
+    "http://fake.test/test/url/repo",
+    "git@fake.test:test/url/repo.git",
+    "git@fake.test:test/url/repo.git",
+    "test@fake.test:test/url/repo.git",
+    "test@fake.test:test/url/repo",
+  ];
+
   test(
     'Should check if current url is git url',
     () async {
       // arrange
-      final validUrls = [
-        "https://fake.git/test/url/repo.git",
-        "http://fake.git/test/url/repo.git",
-        "git@fake.git:test/url/repo.git",
-        "git@gitlab.com:test/url/repo.git",
-        "test@fake.git:test/url/repo.git",
-      ];
-
       final invalidUrls = [
-        "path/to/location",
+        "http://fake.test/test/url/repo.no_git",
+        "test@fake.test:test/url/repo.no_git"
+            "path/to/location",
         "",
       ];
 
@@ -34,20 +38,15 @@ void main() {
     'Should extract gitPath',
     () async {
       // arrange
-      final urls = [
-        "https://fake.git/test/url/repo.git",
-        "http://fake.git/test/url/repo.git",
-        "git@fake.git:test/url/repo.git",
-        "git@gitlab.com:test/url/repo.git",
-        "test@fake.git:test/url/repo.git",
-      ];
-
       // act
-      for (var url in urls) {
+      for (var url in validUrls) {
         // assert
-        expect(extractGitPath(url), "test/url/repo");
+        expect(
+          extractGitPath(url),
+          "fake.test/test/url/repo",
+          reason: "For url $url",
+        );
       }
-
     },
   );
 }

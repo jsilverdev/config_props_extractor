@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning].
 
 - /
 
+## [1.3.0] - 2023-09-13
+
+### Added
+
+- Improved validation for git urls, now can accept urls without ".git" for example
+
+### Fixed
+
+- Now can catch all git exceptions and show in terminal
+- If the folder doesn't exists stop the process and show a message
+
 ## [1.2.0] - 2023-09-12
 
 ### Changed

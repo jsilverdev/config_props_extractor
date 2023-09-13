@@ -1,7 +1,7 @@
 import 'package:dotenv/dotenv.dart';
 
 import '../constants/constants.dart' as constants;
-import '../exceptions/exceptions.dart';
+import '../exceptions/config_exceptions.dart';
 import '../models/config_property.dart';
 import '../utils/string_utils.dart';
 
@@ -56,5 +56,6 @@ class AppConfig {
         () => constants.DEFAULT_CONFIG_SECRET_PATH,
       );
 
-  int get maxDurationInMin => _dotEnv[ConfigProperty.maxDurationInMin.value]?.toInt(3) ?? 3;
+  int get maxDurationInMin =>
+      _dotEnv[ConfigProperty.maxDurationInMin.value]?.toInt(3) ?? 3;
 }

@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'package:process_run/process_run.dart';
 
-import '../exceptions/exceptions.dart';
+import '../exceptions/file_system_exceptions.dart';
 
 class ShellService {
   Shell _shell;
