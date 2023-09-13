@@ -11,19 +11,19 @@ Simple command-line application to get properties from ConfigMaps and Secrets
 
 To run this project, you will need to add the following environment variables to your .env file
 
-`GIT_REPO_PATH` Required. Selected folder that contain config folders
+`GIT_REPO_PATH` Required. Selected folder or url that contain config files
 
 `GIT_BRANCH` Optional. By default is the current branch
 
-`GIT_SSL_ENABLED` Optional. By default is true
+`GIT_SSL_ENABLED` Optional. If the SSL verification can be enabled. By default is true
 
-`GIT_FORCE_REMOTE` Optional. By default is false
+`GIT_FORCE_REMOTE` Optional. If you need to get the last remote version. By default is false
 
-`CONFIG_MAPS_PATH` Optional. By default is 'configMap'
+`CONFIG_MAPS_PATH` Optional. The subfolder where the configMap files are saved. By default is 'configMap'
 
-`SECRETS_PATH` Optional. By default is 'secret'
+`SECRETS_PATH` Optional. The subfolder where the secret files are saved. By default is 'secret'
 
-`MAX_DURATION_IN_MIN` Optional. For remote  By default is 3
+`MAX_DURATION_IN_MIN` Optional. The max duration for fetch get last remote version. By default is 3
 
 ## Run Locally
 
