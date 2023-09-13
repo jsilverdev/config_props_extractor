@@ -20,14 +20,38 @@ class ConfigPropertyMissingException extends AppException {
   }) : super('"$property" property is not defined int the .env file');
 }
 
-class InvalidValidGitPathException extends AppException {
-  const InvalidValidGitPathException({
-    required final String path
-  }) : super('"$path" path is and invalid git repository');
+abstract class GitException extends AppException {
+  const GitException(super.message);
 }
 
-class IncorrectTopLevelGitPathException extends AppException {
+class InvalidValidGitPathException extends GitException {
+  const InvalidValidGitPathException({required final String path})
+      : super('"$path" path is and invalid git repository');
+}
+
+class IncorrectTopLevelGitPathException extends GitException {
   const IncorrectTopLevelGitPathException({
-    required final String path
+    required final String path,
   }) : super('"$path" path is not in the top level of the git repository');
+}
+
+class InvalidGitLocalBranchException extends GitException {
+  InvalidGitLocalBranchException({
+    required final String branch,
+  }) : super(
+            'The selected branch "$branch" is not valid for the git repository');
+}
+
+class InvalidGitRemoteBranchException extends GitException {
+  InvalidGitRemoteBranchException({
+    required final String branch,
+  }) : super(
+            'The selected branch "$branch" is not in the remote git repository');
+}
+
+class GitRemoteToManyTimeException extends GitException {
+  GitRemoteToManyTimeException({
+    required final int minutes,
+  }) : super(
+            "Attempting to connect to remote repository took longer than expected ($minutes min)");
 }

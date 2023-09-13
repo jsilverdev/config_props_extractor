@@ -18,22 +18,28 @@ class KubeConfigService {
     KubeConfigData? data,
   }) : _data = data ?? {};
 
-  void loadConfigDatas() {
-    _loadConfigData(
-      _appConfig.configMapsPath,
-      KubeConfigKind.configMap,
+  void loadConfigDatasFrom({required String gitPath}) {
+    _validatePathAndAddToData(
+      configPath: path.absolute(gitPath, _appConfig.configMapsPath),
+      kind: KubeConfigKind.configMap,
     );
-    _loadConfigData(
-      _appConfig.secretsPath,
-      KubeConfigKind.secret,
+
+    _validatePathAndAddToData(
+      configPath: path.absolute(gitPath, _appConfig.secretsPath),
+      kind: KubeConfigKind.secret,
     );
   }
 
-  void _loadConfigData(String configPath, KubeConfigKind kind) {
-    final configDir = Directory(path.absolute(
-      _appConfig.gitRepoPath,
-      configPath,
-    ));
+  void _validatePathAndAddToData({
+    required String configPath,
+    required KubeConfigKind kind,
+  }) {
+    final configDir = Directory(configPath);
+
+    if (!configDir.existsSync()) {
+      log.w('The path "${configDir.absolute.path}" not exits, skipping');
+      return;
+    }
 
     _data.addAllFromDirectory(
       configDir,

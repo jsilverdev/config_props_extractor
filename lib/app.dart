@@ -14,11 +14,11 @@ Future<void> runApp(List<String> arguments) async {
     ShellService(),
   );
 
-  await repoService.setup();
+  String gitPath = await repoService.setup();
 
   final kubeConfigService = KubeConfigService(appConfig);
   kubeConfigService
-    ..loadConfigDatas()
+    ..loadConfigDatasFrom(gitPath: gitPath)
     ..saveDataAsPropertiesFile(
       fileName: constants.PROPERTIES_FILENAME,
       config: PropertiesStringConfig.properties(),

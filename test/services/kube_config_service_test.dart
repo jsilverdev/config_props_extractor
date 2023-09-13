@@ -39,7 +39,7 @@ void main() {
         when(() => mockAppConfig.configMapsPath).thenReturn("configs");
         when(() => mockAppConfig.secretsPath).thenReturn("configs");
         // act
-        kubeConfigService.loadConfigDatas();
+        kubeConfigService.loadConfigDatasFrom(gitPath: "test/_data");
         // assert
         expect(testData, isNotEmpty);
         expect(testData, {
@@ -49,6 +49,18 @@ void main() {
           "secret_key": "value",
           "another_key": null,
         });
+      },
+    );
+    test(
+      "Should don't fail if the folders not exists",
+      () async {
+        // arrange
+        when(() => mockAppConfig.configMapsPath).thenReturn("configNotExists");
+        when(() => mockAppConfig.secretsPath).thenReturn("secretNotExists");
+        // act
+        kubeConfigService.loadConfigDatasFrom(gitPath: "test/_data");
+        // assert
+        expect(testData, isEmpty);
       },
     );
   });

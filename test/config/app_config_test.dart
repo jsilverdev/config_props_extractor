@@ -22,6 +22,7 @@ void main() {
     final gitBranch = "branch";
     final configMapsPath = "config_map_path";
     final secretsPath = "secret_path";
+    final maxDurationInMin = "100";
 
     Map<String, String> dotEnvProps = Map.of({
       ConfigProperty.gitRepoPath.value: gitRepoPath,
@@ -30,6 +31,7 @@ void main() {
       ConfigProperty.gitBranch.value: gitBranch,
       ConfigProperty.configMapsPath.value: configMapsPath,
       ConfigProperty.secretsPath.value: secretsPath,
+      ConfigProperty.maxDurationInMin.value: maxDurationInMin
     });
     dotEnv.addAll(dotEnvProps);
 
@@ -39,6 +41,7 @@ void main() {
     expect(appConfig.gitBranch, equals(gitBranch));
     expect(appConfig.configMapsPath, equals(configMapsPath));
     expect(appConfig.secretsPath, equals(secretsPath));
+    expect(appConfig.maxDurationInMin, equals(maxDurationInMin.toInt()));
   });
 
   test('Fail get properties', () async {
@@ -65,6 +68,10 @@ void main() {
     expect(
       appConfig.secretsPath,
       equals(constants.DEFAULT_CONFIG_SECRET_PATH),
+    );
+    expect(
+      appConfig.maxDurationInMin,
+      3,
     );
   });
 
