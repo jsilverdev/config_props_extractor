@@ -41,7 +41,10 @@ void main() {
     expect(appConfig.gitBranch, equals(gitBranch));
     expect(appConfig.configMapsPath, equals(configMapsPath));
     expect(appConfig.secretsPath, equals(secretsPath));
-    expect(appConfig.maxDurationInMin, equals(maxDurationInMin.toInt()));
+    expect(
+      appConfig.maxDuration,
+      equals(Duration(minutes: maxDurationInMin.toInt())),
+    );
   });
 
   test('Fail get properties', () async {
@@ -70,8 +73,8 @@ void main() {
       equals(constants.DEFAULT_CONFIG_SECRET_PATH),
     );
     expect(
-      appConfig.maxDurationInMin,
-      3,
+      appConfig.maxDuration,
+      Duration(minutes: 2),
     );
   });
 

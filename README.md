@@ -23,7 +23,7 @@ To run this project, you will need to add the following environment variables to
 
 `SECRETS_PATH` Optional. The subfolder where the secret files are saved. By default is 'secret'
 
-`MAX_DURATION_IN_MIN` Optional. The max duration for fetch get last remote version. By default is 3
+`MAX_DURATION_IN_MIN` Optional. The max duration for fetch get last remote version. By default is 2
 
 ## Run Locally
 

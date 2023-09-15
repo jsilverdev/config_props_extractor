@@ -30,7 +30,7 @@ void main() {
 
     repoService = RepoService(mockAppConfig, mockShellService,
         defaultParentFolder: "test/_data");
-    when(() => mockAppConfig.maxDurationInMin).thenReturn(3);
+    when(() => mockAppConfig.maxDuration).thenReturn(Duration(minutes: 2));
   });
 
   group('Setup', () {
@@ -206,17 +206,16 @@ void main() {
         when(() => mockAppConfig.gitRepoPath).thenReturn(gitUrlPath);
         when(() => mockAppConfig.gitForceRemote).thenReturn(false);
         when(() => mockShellService.runScript(GIT_CLONE.format([
-          gitUrlPath,
-          gitAbsoluteDirPath,
-          "",
-        ]))).thenAnswer((_) async => throw ShellException("message", null));
+              gitUrlPath,
+              gitAbsoluteDirPath,
+              "",
+            ]))).thenAnswer((_) async => throw ShellException("message", null));
         expect(
           // act
           () => repoService.setup(),
           // assert
           throwsA(isA<GitShellException>()),
         );
-
       },
     );
 
@@ -274,7 +273,7 @@ void main() {
         // arrange
         when(() => mockAppConfig.gitRepoPath).thenReturn(gitDirPath);
         when(() => mockAppConfig.gitForceRemote).thenReturn(true);
-        when(() => mockAppConfig.maxDurationInMin).thenReturn(1);
+        when(() => mockAppConfig.maxDuration).thenReturn(Duration(minutes: 1));
         when(() => mockShellService.runScript(GIT_TOP_LEVEL_PATH)).thenAnswer(
           (_) async => [processResult(stdout: gitDirPath)],
         );

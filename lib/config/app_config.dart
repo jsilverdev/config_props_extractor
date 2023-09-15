@@ -56,6 +56,7 @@ class AppConfig {
         () => constants.DEFAULT_CONFIG_SECRET_PATH,
       );
 
-  int get maxDurationInMin =>
-      _dotEnv[ConfigProperty.maxDurationInMin.value]?.toInt(3) ?? 3;
+  Duration get maxDuration => Duration(
+        minutes: _dotEnv[ConfigProperty.maxDurationInMin.value]?.toInt(2) ?? 2,
+      );
 }

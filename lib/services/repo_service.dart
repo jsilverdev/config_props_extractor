@@ -52,22 +52,15 @@ class RepoService {
   Future<void> _refreshLastChangesOnRemoteBranch() async {
     final String branch = _appConfig.gitBranch;
     log.i('Getting latests changes for "$branch" branch');
-    final duration = Duration(minutes: _appConfig.maxDurationInMin);
     try {
-      await _shellService
-          .runScript(
+      final runScript = _shellService.runScript(
         constants.GIT_REFRESH_BRANCH.format([
           branch,
           _getRemoteConfig(),
         ]),
-      )
-          .timeout(
-        duration,
-        onTimeout: () {
-          _shellService.dispose();
-          throw GitRemoteToManyTimeException(minutes: duration.inMinutes);
-        },
       );
+
+      await _limitDurationForScript(runScript);
     } on ShellException catch (e) {
       throw GitShellException(e);
     }
@@ -102,17 +95,30 @@ class RepoService {
     if ((Directory(_gitPath).existsSync())) return false;
 
     try {
-      await _shellService.runScript(constants.GIT_CLONE.format([
+      final runScript = _shellService.runScript(constants.GIT_CLONE.format([
         gitUrl,
         gitPath,
         _getRemoteConfig(),
       ]));
+
+      await _limitDurationForScript(runScript);
       log.i("Successfully cloned at: $gitPath");
       return true;
     } on ShellException catch (e) {
       throw GitShellException(e);
     }
   }
+
+  Future<T> _limitDurationForScript<T>(Future<T> runScript) =>
+      runScript.timeout(
+        _appConfig.maxDuration,
+        onTimeout: () {
+          _shellService.dispose();
+          throw GitRemoteToManyTimeException(
+            minutes: _appConfig.maxDuration.inMinutes,
+          );
+        },
+      );
 
   Future<void> _validateGitUrlAndClone() async {
     final bool isGitUrl = isValidGitUrl(_appConfig.gitRepoPath);

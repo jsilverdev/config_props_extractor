@@ -1,14 +1,16 @@
 import 'dart:async';
+import 'dart:io' as io;
 
 import '../../config/logger.dart';
+import '../../models/io_models.dart';
 import '../exceptions.dart';
-import '../git_exceptions.dart';
 
-Future<void> handle(FutureOr<void> Function() function) async {
+Future<void> handle(
+  FutureOr<void> Function() function, {
+  Exit exit = io.exit,
+}) async {
   try {
     await function();
-  } on GitException catch (e) {
-    log.e("Problems related to git found\n$e");
   } on AppException catch (e) {
     log.e(e);
   } catch (e, s) {
@@ -17,5 +19,7 @@ Future<void> handle(FutureOr<void> Function() function) async {
       error: e,
       stackTrace: s,
     );
+  } finally {
+    exit(0);
   }
 }
