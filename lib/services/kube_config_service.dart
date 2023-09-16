@@ -8,17 +8,21 @@ import '../models/kube_kind.dart';
 import '../models/properties_string_config.dart';
 import '../utils/date_utils.dart';
 import '../utils/kube_utils.dart';
+import 'shell_service.dart';
 
 class KubeConfigService {
   final AppConfig _appConfig;
   final KubeConfigData _data;
+  final ShellService _shellService;
 
   KubeConfigService(
-    this._appConfig, {
+    this._appConfig,
+    this._shellService, {
     KubeConfigData? data,
   }) : _data = data ?? {};
 
-  void loadConfigDatasFrom({required String gitPath}) {
+  void loadConfigDatasFromCurrentPath() {
+    final String gitPath = _shellService.currentPath;
     _validatePathAndAddToData(
       configPath: path.absolute(gitPath, _appConfig.configMapsPath),
       kind: KubeConfigKind.configMap,

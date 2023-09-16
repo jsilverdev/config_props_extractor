@@ -14,9 +14,11 @@ import '../helpers/mocks.dart';
 void main() {
   late MockAppConfig mockAppConfig;
   late KubeConfigService kubeConfigService;
+  late MockShellService mockShellService;
 
   setUp(() {
     mockAppConfig = MockAppConfig();
+    mockShellService = MockShellService();
   });
 
   group('Load Configs', () {
@@ -25,6 +27,7 @@ void main() {
       testData = {};
       kubeConfigService = KubeConfigService(
         mockAppConfig,
+        mockShellService,
         data: testData,
       );
       when(() => mockAppConfig.gitRepoPath).thenReturn(
@@ -38,8 +41,9 @@ void main() {
         // arrange
         when(() => mockAppConfig.configMapsPath).thenReturn("configs");
         when(() => mockAppConfig.secretsPath).thenReturn("configs");
+        when(() => mockShellService.currentPath).thenReturn("test/_data");
         // act
-        kubeConfigService.loadConfigDatasFrom(gitPath: "test/_data");
+        kubeConfigService.loadConfigDatasFromCurrentPath();
         // assert
         expect(testData, isNotEmpty);
         expect(testData, {
@@ -57,8 +61,9 @@ void main() {
         // arrange
         when(() => mockAppConfig.configMapsPath).thenReturn("configNotExists");
         when(() => mockAppConfig.secretsPath).thenReturn("secretNotExists");
+        when(() => mockShellService.currentPath).thenReturn("test/_data");
         // act
-        kubeConfigService.loadConfigDatasFrom(gitPath: "test/_data");
+        kubeConfigService.loadConfigDatasFromCurrentPath();
         // assert
         expect(testData, isEmpty);
       },
@@ -72,9 +77,7 @@ void main() {
 
     setUp(() {
       if (testFile.existsSync()) testFile.deleteSync();
-      kubeConfigService = KubeConfigService(
-        mockAppConfig,
-      );
+      kubeConfigService = KubeConfigService(mockAppConfig, mockShellService);
     });
 
     tearDown(() {
