@@ -6,7 +6,6 @@ import 'package:config_props_extractor/exceptions/config_exceptions.dart';
 import 'package:config_props_extractor/exceptions/file_system_exceptions.dart';
 import 'package:config_props_extractor/exceptions/git_exceptions.dart';
 import 'package:config_props_extractor/services/repo_service.dart';
-import 'package:config_props_extractor/services/shell_service.dart';
 import 'package:config_props_extractor/utils/string_utils.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:mocktail/mocktail.dart';
@@ -16,8 +15,6 @@ import 'package:test/test.dart';
 
 import '../helpers/mocks.dart';
 import '../helpers/process_run_helper.dart';
-
-class MockShellService extends Mock implements ShellService {}
 
 void main() {
   late MockAppConfig mockAppConfig;

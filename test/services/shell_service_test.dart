@@ -120,7 +120,7 @@ void main() {
         shellService.moveShellTo(folderPath);
         // assert
         expect(
-          shellService.workingDir,
+          shellService.currentPath,
           equals(folderPath),
         );
       },
@@ -138,7 +138,7 @@ void main() {
         shellService.popShell();
         // assert
         expect(
-          shellService.workingDir,
+          shellService.currentPath,
           equals(folderPath),
         );
       },

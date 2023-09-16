@@ -131,7 +131,7 @@ class RepoService {
 
     _gitPath = path.absolute(
       _defaultReposFolder,
-      extractGitPath(_appConfig.gitRepoPath),
+      extractPathFromGitUrl(_appConfig.gitRepoPath),
     );
 
     _isCloned = await _tryCloneInPath(

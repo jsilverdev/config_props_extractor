@@ -63,5 +63,5 @@ class ShellService {
     _shell.kill();
   }
 
-  String? get workingDir => _shell.options.workingDirectory;
+  String get currentPath => _shell.path;
 }

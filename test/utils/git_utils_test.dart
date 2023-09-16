@@ -42,7 +42,7 @@ void main() {
       for (var url in validUrls) {
         // assert
         expect(
-          extractGitPath(url),
+          extractPathFromGitUrl(url),
           "fake.test/test/url/repo",
           reason: "For url $url",
         );

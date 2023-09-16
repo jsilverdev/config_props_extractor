@@ -8,7 +8,7 @@ bool isValidGitUrl(String url) {
   return _validUrlRegex.hasMatch(url);
 }
 
-String extractGitPath(String url) {
+String extractPathFromGitUrl(String url) {
   if (url.endsWith(".git")) {
     url = url.substring(0, url.length - 4);
   }
