@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:config_props_extractor/exceptions/exceptions.dart';
 import 'package:config_props_extractor/exceptions/file_system_exceptions.dart';
 import 'package:config_props_extractor/services/shell_service.dart';
 import 'package:mocktail/mocktail.dart';
@@ -155,6 +156,25 @@ void main() {
           // assert
           returnsNormally,
         );
+      },
+    );
+
+    test(
+      'Should Throw and AppShellException on ShellException for shell run',
+      () async {
+        // arrange
+        when(
+          () => mockShell.run(any(), onProcess: any(named: 'onProcess')),
+        ).thenAnswer((_) async => throw ShellException("", null));
+        // act
+
+        expect(
+          () => shellService.runScript("script"),
+          throwsA(
+            isA<AppShellException>(),
+          ),
+        );
+        // assert
       },
     );
   });

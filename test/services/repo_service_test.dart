@@ -2,19 +2,18 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:config_props_extractor/constants/constants.dart';
-import 'package:config_props_extractor/exceptions/config_exceptions.dart';
 import 'package:config_props_extractor/exceptions/file_system_exceptions.dart';
 import 'package:config_props_extractor/exceptions/git_exceptions.dart';
+import 'package:config_props_extractor/models/git_repo.dart';
 import 'package:config_props_extractor/services/repo_service.dart';
 import 'package:config_props_extractor/utils/string_utils.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:path/path.dart';
-import 'package:process_run/process_run.dart';
+import 'package:path/path.dart' as path;
 import 'package:test/test.dart';
 
+import '../helpers/git_helper.dart';
 import '../helpers/mocks.dart';
-import '../helpers/process_run_helper.dart';
 
 void main() {
   late MockAppConfig mockAppConfig;
@@ -24,352 +23,291 @@ void main() {
   setUp(() {
     mockAppConfig = MockAppConfig();
     mockShellService = MockShellService();
-
-    repoService = RepoService(mockAppConfig, mockShellService,
-        defaultParentFolder: "test/_data");
-    when(() => mockAppConfig.maxDuration).thenReturn(Duration(minutes: 2));
+    repoService = RepoService(
+      mockAppConfig,
+      mockShellService,
+      reposFolder: reposFolder,
+    );
   });
 
-  group('Setup', () {
+  group('Load Pre-requisites', () {
+    test(
+      'Should load pre-requisites for git path',
+      () async {
+        // arrange
+        when(() => mockAppConfig.gitRepoPath).thenReturn(gitPath);
+        when(() => mockAppConfig.gitBranch).thenReturn(gitBranch);
+        // act
+        final gitRepo = repoService.preRequisites();
+        // assert
+        expect(gitRepo, isNotNull);
+        expect(path.equals(gitRepo.gitDir.path, gitPath), equals(true));
+        expect(gitRepo.gitUrl, "");
+        expect(gitRepo.branch, gitBranch);
+        expect(gitRepo.toClone, false);
+      },
+    );
+
+    test(
+      'Should load pre-requisites for git url',
+      () async {
+        // arrange
+        when(() => mockAppConfig.gitRepoPath).thenReturn(gitUrl);
+        when(() => mockAppConfig.gitBranch).thenReturn(gitBranch);
+        // act
+        final gitRepo = repoService.preRequisites();
+        // assert
+        expect(gitRepo, isNotNull);
+        expect(path.equals(gitRepo.gitDir.path, gitPath), equals(true));
+        expect(gitRepo.gitUrl, gitUrl);
+        expect(gitRepo.branch, gitBranch);
+        expect(gitRepo.toClone, true);
+      },
+    );
+  });
+
+  group('Try Cloning', () {
+    late GitRepo gitRepo;
+    final gitDirToClone = Directory("test/_data/folder_to_clone");
+
     setUp(() {
-      when(() => mockAppConfig.gitSSLEnabled).thenReturn(true);
+      gitRepo = generateGitRepo(
+        gitPath: gitDirToClone.path,
+        toClone: true,
+      );
     });
-
-    const branch = "selected_branch";
-    const gitDirPath = "test/_data/test.test/configs/config";
-    const gitUrlPath = "https://test.test/configs/config.git";
-    final gitAbsoluteDirPath =
-        absolute("test/_data", 'test.test/configs/config');
-
-    void createFolder(path) {
-      final dir = Directory(path);
-      if (!dir.existsSync()) {
-        dir.createSync(recursive: true);
-      }
-    }
-
-    void destroyFolder(path) {
-      final dir = Directory(path);
-      if (dir.existsSync()) {
-        dir.deleteSync(recursive: true);
-      }
-    }
 
     tearDown(() {
-      destroyFolder(gitAbsoluteDirPath);
-    });
-
-    Future<void> testSetup({
-      required bool isBranchDefined,
-      required bool gitForceRemote,
-      String gitConfig = "",
-      String path = gitDirPath,
-      Map<String, List<ProcessResult> Function()> scriptsInOrder = const {},
-    }) async {
-      // arrange
-      bool firstExec = true;
-
-      when(() => mockAppConfig.gitRepoPath).thenReturn(path);
-      when(() => mockAppConfig.gitBranch).thenAnswer(
-        (_) {
-          if (isBranchDefined) return branch;
-          if (firstExec) {
-            firstExec = false;
-            return '';
-          }
-          return branch;
-        },
-      );
-      when(() => mockAppConfig.gitForceRemote).thenReturn(gitForceRemote);
-
-      scriptsInOrder.forEach((script, results) {
-        when(() => mockShellService.runScript(script)).thenAnswer(
-          (_) async => results(),
-        );
-      });
-
-      // act
-      await repoService.setup();
-
-      // assert
-
-      verify(
-        () => mockShellService.moveShellTo(
-          path == gitDirPath ? path : gitAbsoluteDirPath,
-        ),
-      );
-      verify(() => mockShellService.checkExecutable(GIT));
-      if (scriptsInOrder.isNotEmpty) {
-        verifyInOrder(
-          scriptsInOrder.keys
-              .map((script) => () => mockShellService.runScript(script))
-              .toList(),
-        );
+      if (gitDirToClone.existsSync()) {
+        gitDirToClone.deleteSync(recursive: true);
       }
-    }
-
-    test(
-      'Should run success when repo is folder when branch is defined and force remote is enabled',
-      () async {
-        createFolder(gitAbsoluteDirPath);
-        await testSetup(
-          isBranchDefined: true,
-          gitForceRemote: true,
-          scriptsInOrder: {
-            GIT_TOP_LEVEL_PATH: () => [processResult(stdout: gitDirPath)],
-            GIT_REFRESH_BRANCH.format([branch, ""]): () => [],
-            GIT_CHECKOUT.format([branch]): () => [],
-            GIT_OVERRIDE_WITH_REMOTE.format([branch]): () => []
-          },
-        );
-      },
-    );
-
-    test(
-      'Should run success when repo is folder and git SLL is disabled',
-      () async {
-        createFolder(gitAbsoluteDirPath);
-        when(() => mockAppConfig.gitSSLEnabled).thenReturn(false);
-        await testSetup(
-          isBranchDefined: true,
-          gitForceRemote: true,
-          gitConfig: "-c $GIT_SSL_VERIFY_FALSE",
-          scriptsInOrder: {
-            GIT_TOP_LEVEL_PATH: () => [processResult(stdout: gitDirPath)],
-            GIT_REFRESH_BRANCH.format([
-              branch,
-              "-c $GIT_SSL_VERIFY_FALSE",
-            ]): () => [],
-            GIT_CHECKOUT.format([branch]): () => [],
-            GIT_OVERRIDE_WITH_REMOTE.format([branch]): () => []
-          },
-        );
-      },
-    );
-
-    test('Should run success when repo is folder and force remote is false',
-        () async {
-      createFolder(gitAbsoluteDirPath);
-      await testSetup(
-        isBranchDefined: false,
-        gitForceRemote: false,
-        scriptsInOrder: {
-          GIT_TOP_LEVEL_PATH: () => [processResult(stdout: gitAbsoluteDirPath)],
-          GIT_BRANCH_SHOW_CURRENT: () => [processResult(stdout: branch)],
-          GIT_CHECKOUT.format([branch]): () => [],
-        },
-      );
     });
 
     test(
-      'Should run success when gitRepoPath is Url and gitPath not exits',
-      () async {
-        testSetup(
-            isBranchDefined: true,
-            gitForceRemote: false,
-            path: gitUrlPath,
-            scriptsInOrder: {
-              GIT_CLONE.format([gitUrlPath, gitAbsoluteDirPath, ""]): () {
-                createFolder(gitAbsoluteDirPath);
-                return [];
-              },
-              GIT_TOP_LEVEL_PATH: () =>
-                  [processResult(stdout: gitAbsoluteDirPath)],
-              GIT_CHECKOUT.format([branch]): () => [],
-            });
-      },
-    );
-
-    test(
-      'Should run success when gitRepoPath is Url and gitPath exists',
-      () async {
-        createFolder(gitAbsoluteDirPath);
-        testSetup(
-            isBranchDefined: true,
-            gitForceRemote: false,
-            path: gitUrlPath,
-            scriptsInOrder: {
-              GIT_TOP_LEVEL_PATH: () =>
-                  [processResult(stdout: gitAbsoluteDirPath)],
-              GIT_CHECKOUT.format([branch]): () => [],
-            });
-      },
-    );
-
-    test(
-      'Should fail when git clone fail',
+      'Should Stop if is not remote',
       () async {
         // arrange
-        when(() => mockAppConfig.gitRepoPath).thenReturn(gitUrlPath);
-        when(() => mockAppConfig.gitForceRemote).thenReturn(false);
-        when(() => mockShellService.runScript(GIT_CLONE.format([
-              gitUrlPath,
-              gitAbsoluteDirPath,
-              "",
-            ]))).thenAnswer((_) async => throw ShellException("message", null));
-        expect(
-          // act
-          () => repoService.setup(),
-          // assert
-          throwsA(isA<GitShellException>()),
+        final localGitRepo = GitRepo(
+          gitDir: Directory(gitPath),
+          gitUrl: "",
+          branch: gitBranch,
+          toClone: false,
         );
-      },
-    );
-
-    test(
-      'Should fail if Local Branch not exists',
-      () async {
-        createFolder(gitAbsoluteDirPath);
-        // arrange
-        when(() => mockAppConfig.gitRepoPath).thenReturn(gitDirPath);
-        when(() => mockAppConfig.gitForceRemote).thenReturn(false);
-        when(() => mockShellService.runScript(GIT_TOP_LEVEL_PATH)).thenAnswer(
-          (_) async => [processResult(stdout: gitDirPath)],
-        );
-        when(() => mockAppConfig.gitBranch).thenReturn("fail_branch");
-        when(() => mockShellService
-                .runScript(GIT_CHECKOUT.format(["fail_branch"])))
-            .thenAnswer((_) async => throw ShellException("exception", null));
-        expect(
-          // act
-          () => repoService.setup(),
-          // assert
-          throwsA(isA<GitShellException>()),
-        );
-      },
-    );
-
-    test(
-      'Should fail if Remote Branch not exists',
-      () async {
-        createFolder(gitAbsoluteDirPath);
-        // arrange
-        when(() => mockAppConfig.gitRepoPath).thenReturn(gitDirPath);
-        when(() => mockAppConfig.gitForceRemote).thenReturn(true);
-        when(() => mockShellService.runScript(GIT_TOP_LEVEL_PATH)).thenAnswer(
-          (_) async => [processResult(stdout: gitDirPath)],
-        );
-        when(() => mockAppConfig.gitBranch).thenReturn("fail_branch");
-        when(() => mockShellService
-                .runScript(GIT_REFRESH_BRANCH.format(["fail_branch", ""])))
-            .thenAnswer((_) async => throw ShellException("exception", null));
         // act
-        expect(
-          // act
-          () => repoService.setup(),
-          // assert
-          throwsA(isA<GitShellException>()),
+        await repoService.tryCloning(localGitRepo);
+        // assert
+        verifyNever(
+          () => mockShellService.runScript(
+            any(that: contains("git")),
+          ),
         );
       },
     );
 
     test(
-      'Should fail if git refresh branch is taking too much',
+      'Should clone successfully',
       () async {
-        createFolder(gitAbsoluteDirPath);
         // arrange
-        when(() => mockAppConfig.gitRepoPath).thenReturn(gitDirPath);
-        when(() => mockAppConfig.gitForceRemote).thenReturn(true);
-        when(() => mockAppConfig.maxDuration).thenReturn(Duration(minutes: 1));
-        when(() => mockShellService.runScript(GIT_TOP_LEVEL_PATH)).thenAnswer(
-          (_) async => [processResult(stdout: gitDirPath)],
+        gitDirToClone.createSync();
+        when(() => mockAppConfig.gitSSLEnabled).thenReturn(false);
+        when(() => mockAppConfig.maxDuration).thenReturn(Duration.zero);
+        when(
+          () => mockShellService.runScript(
+            any(that: contains("git")),
+          ),
+        ).thenAnswer((_) async => []);
+
+        // act
+        await repoService.tryCloning(gitRepo);
+
+        // assert
+        verify(
+          () => mockShellService.runScript(
+            any(that: contains("git")),
+          ),
         );
-        when(() => mockAppConfig.gitBranch).thenReturn("fail_branch");
-        when(() => mockShellService
-                .runScript(GIT_REFRESH_BRANCH.format(["fail_branch", ""])))
-            .thenAnswer((_) async {
-          await Completer().future.timeout(Duration(minutes: 2));
+      },
+    );
+  });
+
+  group("Check Git Path", () {
+    test(
+      'Should throws FolderNotFoundException if path no exits',
+      () async {
+        // arrange
+        final gitRepo = generateGitRepo(
+          gitPath: "test/_data/no_found_folder",
+        );
+
+        expect(
+          // act
+          () async => repoService.checkGitPath(gitRepo),
+          // assert
+          throwsA(isA<FolderNotFoundException>()),
+        );
+      },
+    );
+
+    test(
+      'Should throws IncorrectTopLevelGitPathException if path is not the top git repo',
+      () async {
+        // arrange
+        final gitRepo = generateGitRepo();
+        when(
+          () => mockShellService.runScript(
+            any(that: contains("git")),
+          ),
+        ).thenAnswer(
+          (_) async => [
+            ProcessResult(pid, exitCode, "/another/path", stderr),
+          ],
+        );
+
+        expect(
+          // act
+          () => repoService.checkGitPath(gitRepo),
+          // assert
+          throwsA(isA<IncorrectTopLevelGitPathException>()),
+        );
+        verify(() => mockShellService.runScript(GIT_TOP_LEVEL_PATH));
+      },
+    );
+  });
+
+  group('Try Fetching Changes', () {
+    test(
+      'Should Stop if force remote is disabled',
+      () async {
+        // arrange
+        when(() => mockAppConfig.gitForceRemote).thenReturn(false);
+        final gitRepo = generateGitRepo();
+        // act
+        repoService.tryFetchingChanges(gitRepo);
+        // assert
+        verifyNever(
+          () => mockShellService.runScript(
+            any(that: contains("git")),
+          ),
+        );
+      },
+    );
+
+    test(
+      'Should Stop if the config git path is url',
+      () async {
+        // arrange
+        when(() => mockAppConfig.gitForceRemote).thenReturn(true);
+        final gitRepo = generateGitRepo(toClone: true);
+        // act
+        repoService.tryFetchingChanges(gitRepo);
+        // assert
+        verifyNever(
+          () => mockShellService.runScript(
+            any(that: contains("git")),
+          ),
+        );
+      },
+    );
+
+    test(
+      'Should assign current branch if is not defined',
+      () async {
+        // arrange
+        final gitRepo = generateGitRepo(branch: "");
+        when(() => mockAppConfig.gitForceRemote).thenReturn(false);
+        when(
+          () => mockShellService.runScript(GIT_BRANCH_SHOW_CURRENT),
+        ).thenAnswer(
+          (_) async => [
+            ProcessResult(pid, exitCode, gitBranch, stderr),
+          ],
+        );
+        // act
+        await repoService.tryFetchingChanges(gitRepo);
+        // assert
+        expect(gitRepo.branch, gitBranch);
+      },
+    );
+
+    test(
+      'Should fetch successfully',
+      () async {
+        // arrange
+        final gitRepo = generateGitRepo();
+        when(() => mockAppConfig.gitSSLEnabled).thenReturn(true);
+        when(() => mockAppConfig.gitForceRemote).thenReturn(true);
+        when(() => mockAppConfig.maxDuration).thenReturn(Duration.zero);
+        when(() => mockShellService.runScript(any(that: contains("git"))))
+            .thenAnswer((_) async => []);
+        // act
+        await repoService.tryFetchingChanges(gitRepo);
+        // assert
+        verify(
+          () => mockShellService.runScript(
+            GIT_REFRESH_BRANCH.format([gitBranch, ""]),
+          ),
+        );
+      },
+    );
+
+    test(
+      'Should throws a timeout Exception if taking many time',
+      () async {
+        // arrange
+        final gitRepo = generateGitRepo();
+        when(() => mockAppConfig.gitSSLEnabled).thenReturn(true);
+        when(() => mockAppConfig.gitForceRemote).thenReturn(true);
+        when(() => mockAppConfig.maxDuration).thenReturn(Duration(minutes: 2));
+        when(() => mockShellService.runScript(
+              GIT_REFRESH_BRANCH.format([
+                gitBranch,
+                "",
+              ]),
+            )).thenAnswer((_) async {
+          await Completer().future.timeout(Duration(minutes: 3));
           return [];
         });
-        // act
 
-        FakeAsync().run(
-          (self) {
-            expect(
-              // act
-              () => repoService.setup(),
-              // assert
-              throwsA(isA<GitRemoteToManyTimeException>()),
-            );
-            self.elapse(Duration(minutes: 3));
-          },
-        );
+        FakeAsync().run((self) {
+          expect(
+            // act
+            () => repoService.tryFetchingChanges(gitRepo),
+            // assert
+            throwsA(isA<GitRemoteToManyTimeException>()),
+          );
+          self.elapse(Duration(minutes: 3));
+        });
       },
     );
+  });
 
+  group('Apply Changes', () {
     test(
-      "Can't find gitRepoPath",
+      'Should Apply Changes Successfully',
       () async {
         // arrange
-        when(() => mockAppConfig.gitRepoPath).thenThrow(
-          ConfigPropertyMissingException(property: 'missingProp'),
+        final gitRepo = generateGitRepo();
+        when(
+          () => mockShellService.runScript(
+            any(that: contains("git")),
+          ),
+        ).thenAnswer((_) async => []);
+        // act
+        await repoService.applyChanges(gitRepo);
+        // assert
+        verify(
+          () => mockShellService.runScript(
+            GIT_CHECKOUT.format([
+              gitRepo.branch,
+            ]),
+          ),
         );
-
-        expect(
-          // act
-          () => repoService.setup(),
-          // assert
-          throwsA(isA<ConfigPropertyMissingException>()),
-        );
+        verify(() => mockShellService.runScript(
+              GIT_OVERRIDE_WITH_REMOTE.format([
+                gitRepo.branch,
+              ]),
+            ));
       },
     );
-
-    test("Can't find executable", () {
-      // arrange
-      when(() => mockAppConfig.gitRepoPath).thenReturn("/path/to/folder");
-      when(() => mockShellService.checkExecutable(any())).thenThrow(
-        ExecutableNotFoundInPathException(GIT),
-      );
-
-      expect(
-        // act
-        () => repoService.setup(),
-        // assert
-        throwsA(isA<ExecutableNotFoundInPathException>()),
-      );
-    });
-
-    test("The path is invalid git repository", () {
-      // arrange
-      createFolder(gitAbsoluteDirPath);
-      when(() => mockAppConfig.gitRepoPath).thenReturn(gitDirPath);
-      when(() => mockShellService.runScript(GIT_TOP_LEVEL_PATH)).thenAnswer(
-        (_) async => [ProcessResult(pid, exitCode, "/another/path", stderr)],
-      );
-
-      expect(
-        // act
-        () => repoService.setup(),
-        // assert
-        throwsA(isA<IncorrectTopLevelGitPathException>()),
-      );
-    });
-
-    test("The folder not exists", () {
-      // arrange
-      when(() => mockAppConfig.gitRepoPath).thenReturn(gitDirPath);
-
-      expect(
-        // act
-        () => repoService.setup(),
-        // assert
-        throwsA(isA<FolderNotFoundException>()),
-      );
-    });
-
-    test("The path is not in the top-level of the git repository", () {
-      // arrange
-      createFolder(gitAbsoluteDirPath);
-      when(() => mockAppConfig.gitRepoPath).thenReturn(gitDirPath);
-      when(() => mockShellService.runScript(GIT_TOP_LEVEL_PATH))
-          .thenAnswer((_) async => throw ShellException("exception", null));
-
-      expect(
-        // act
-        () => repoService.setup(),
-        // assert
-        throwsA(isA<GitShellException>()),
-      );
-    });
   });
 }

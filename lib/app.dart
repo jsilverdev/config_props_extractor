@@ -15,7 +15,11 @@ Future<void> runApp(List<String> arguments) async {
     shellService,
   );
 
-  await repoService.setup();
+  final gitRepo = repoService.preRequisites();
+  await repoService.tryCloning(gitRepo);
+  await repoService.checkGitPath(gitRepo);
+  await repoService.tryFetchingChanges(gitRepo);
+  await repoService.applyChanges(gitRepo);
 
   final kubeConfigService = KubeConfigService(appConfig, shellService);
   kubeConfigService

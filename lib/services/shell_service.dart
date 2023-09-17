@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'package:process_run/process_run.dart';
 
+import '../exceptions/exceptions.dart';
 import '../exceptions/file_system_exceptions.dart';
 import '../models/io_models.dart';
 
@@ -34,17 +35,21 @@ class ShellService {
     }
   }
 
-  Future<List<ProcessResult>> runScript(String script) {
-    return _shell.run(script, onProcess: (process) {
-      if (_pid == null) {
-        _pid = process.pid;
-        late final StreamSubscription<ProcessSignal> sub;
-        sub = _processSignal.watch().listen((event) {
-          sub.cancel();
-          dispose();
-        });
-      }
-    });
+  Future<List<ProcessResult>> runScript(String script) async {
+    try {
+      return await _shell.run(script, onProcess: (process) {
+        if (_pid == null) {
+          _pid = process.pid;
+          late final StreamSubscription<ProcessSignal> sub;
+          sub = _processSignal.watch().listen((event) {
+            sub.cancel();
+            dispose();
+          });
+        }
+      });
+    } on ShellException catch (e) {
+      throw AppShellException(e);
+    }
   }
 
   void moveShellTo(String path) {

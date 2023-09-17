@@ -77,15 +77,4 @@ void main() {
       Duration(minutes: 2),
     );
   });
-
-  test(
-    'Should set value to gitBranch',
-    () async {
-      // arrange
-      appConfig.gitBranch = "test";
-      // act
-      expect(appConfig.gitBranch, equals("test"));
-      // assert
-    },
-  );
 }

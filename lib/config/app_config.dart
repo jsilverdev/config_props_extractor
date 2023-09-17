@@ -40,12 +40,6 @@ class AppConfig {
         () => "",
       );
 
-  set gitBranch(String gitBranch) {
-    _dotEnv.addAll({
-      ConfigProperty.gitBranch.value: gitBranch,
-    });
-  }
-
   String get configMapsPath => _dotEnv.getOrElse(
         ConfigProperty.configMapsPath.value,
         () => constants.DEFAULT_CONFIG_MAP_PATH,
