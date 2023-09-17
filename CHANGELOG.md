@@ -90,6 +90,7 @@ and this project adheres to [Semantic Versioning].
 
 <!-- Versions -->
 [unreleased]: https://github.com/jsilverdev/config_props_extractor/compare/latest...HEAD
+[1.4.0]: https://github.com/jsilverdev/config_props_extractor/compare/bae2b918e2043444dc0f12bd565d534e09621fe3...v1.4.0
 [1.3.0]: https://github.com/jsilverdev/config_props_extractor/compare/63af415f9b081af52ff225e805e97820a3f750fd...v1.3.0
 [1.2.0]: https://github.com/jsilverdev/config_props_extractor/compare/c20a5ab37c83ec9a52258a342fbdca4c44a9ce5d...v1.2.0
 [1.1.0-rc1]: https://github.com/jsilverdev/config_props_extractor/compare/20b9c43ca34750283b567afaf96cc588e766f901...v1.1.0-rc1
