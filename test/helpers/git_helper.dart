@@ -11,12 +11,12 @@ GitRepo generateGitRepo({
   String gitPath = gitPath,
   String gitUrl = gitUrl,
   String branch = gitBranch,
-  bool toClone = false,
+  bool fromRemote = false,
 }) {
   return GitRepo(
     gitDir: Directory(gitPath),
     gitUrl: gitUrl,
     branch: branch,
-    toClone: toClone,
+    fromRemote: fromRemote,
   );
 }

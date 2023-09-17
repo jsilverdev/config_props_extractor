@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:config_props_extractor/constants/constants.dart';
+import 'package:config_props_extractor/exceptions/exceptions.dart';
 import 'package:config_props_extractor/exceptions/file_system_exceptions.dart';
 import 'package:config_props_extractor/exceptions/git_exceptions.dart';
 import 'package:config_props_extractor/models/git_repo.dart';
@@ -10,6 +11,7 @@ import 'package:config_props_extractor/utils/string_utils.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:path/path.dart' as path;
+import 'package:process_run/process_run.dart';
 import 'package:test/test.dart';
 
 import '../helpers/git_helper.dart';
@@ -44,7 +46,7 @@ void main() {
         expect(path.equals(gitRepo.gitDir.path, gitPath), equals(true));
         expect(gitRepo.gitUrl, "");
         expect(gitRepo.branch, gitBranch);
-        expect(gitRepo.toClone, false);
+        expect(gitRepo.fromRemote, false);
       },
     );
 
@@ -61,7 +63,7 @@ void main() {
         expect(path.equals(gitRepo.gitDir.path, gitPath), equals(true));
         expect(gitRepo.gitUrl, gitUrl);
         expect(gitRepo.branch, gitBranch);
-        expect(gitRepo.toClone, true);
+        expect(gitRepo.fromRemote, true);
       },
     );
   });
@@ -73,7 +75,7 @@ void main() {
     setUp(() {
       gitRepo = generateGitRepo(
         gitPath: gitDirToClone.path,
-        toClone: true,
+        fromRemote: true,
       );
     });
 
@@ -91,7 +93,7 @@ void main() {
           gitDir: Directory(gitPath),
           gitUrl: "",
           branch: gitBranch,
-          toClone: false,
+          fromRemote: false,
         );
         // act
         await repoService.tryCloning(localGitRepo);
@@ -105,15 +107,48 @@ void main() {
     );
 
     test(
-      'Should clone successfully',
+      'Should Delete Git Dir if Has not commits and then clone successfully',
       () async {
         // arrange
         gitDirToClone.createSync();
+        when(
+          () => mockShellService.runScript(any(that: contains("git"))),
+        ).thenAnswer(
+          (_) async => [],
+        );
+        when(
+          () => mockShellService.runScript(GIT_REV_PARSE_HEAD),
+        ).thenAnswer(
+          (_) async => throw AppShellException(ShellException("message", null)),
+        );
         when(() => mockAppConfig.gitSSLEnabled).thenReturn(false);
         when(() => mockAppConfig.maxDuration).thenReturn(Duration.zero);
+        // act
+        await repoService.tryCloning(gitRepo);
+        // assert
+        verify(() => mockShellService.runScript(GIT_REV_PARSE_HEAD));
+        verify(
+          () => mockShellService.runScript(GIT_CLONE.format([
+            gitRepo.gitUrl,
+            gitRepo.gitDir.absolute.path,
+            "-c $GIT_SSL_VERIFY_FALSE",
+          ])),
+        );
+        verifyInOrder([
+          () => mockShellService.moveShellTo(gitRepo.gitDir.absolute.path),
+          () => mockShellService.popShell()
+        ]);
+      },
+    );
+
+    test(
+      'Should stop if path exists and has commits',
+      () async {
+        // arrange
+        gitDirToClone.createSync();
         when(
           () => mockShellService.runScript(
-            any(that: contains("git")),
+            GIT_REV_PARSE_HEAD,
           ),
         ).thenAnswer((_) async => []);
 
@@ -123,9 +158,18 @@ void main() {
         // assert
         verify(
           () => mockShellService.runScript(
-            any(that: contains("git")),
+            GIT_REV_PARSE_HEAD,
           ),
         );
+        verifyNever(
+          () => mockShellService.runScript(any(
+            that: contains("git"),
+          )),
+        );
+        verifyInOrder([
+          () => mockShellService.moveShellTo(gitRepo.gitDir.absolute.path),
+          () => mockShellService.popShell()
+        ]);
       },
     );
   });
@@ -176,28 +220,11 @@ void main() {
 
   group('Try Fetching Changes', () {
     test(
-      'Should Stop if force remote is disabled',
+      'Should Stop if force remote is disabled and is not from remote',
       () async {
         // arrange
         when(() => mockAppConfig.gitForceRemote).thenReturn(false);
         final gitRepo = generateGitRepo();
-        // act
-        repoService.tryFetchingChanges(gitRepo);
-        // assert
-        verifyNever(
-          () => mockShellService.runScript(
-            any(that: contains("git")),
-          ),
-        );
-      },
-    );
-
-    test(
-      'Should Stop if the config git path is url',
-      () async {
-        // arrange
-        when(() => mockAppConfig.gitForceRemote).thenReturn(true);
-        final gitRepo = generateGitRepo(toClone: true);
         // act
         repoService.tryFetchingChanges(gitRepo);
         // assert
@@ -230,12 +257,33 @@ void main() {
     );
 
     test(
-      'Should fetch successfully',
+      'Should fetch successfully if force remote is enabled',
       () async {
         // arrange
-        final gitRepo = generateGitRepo();
+        final gitRepo = generateGitRepo(fromRemote: false);
         when(() => mockAppConfig.gitSSLEnabled).thenReturn(true);
         when(() => mockAppConfig.gitForceRemote).thenReturn(true);
+        when(() => mockAppConfig.maxDuration).thenReturn(Duration.zero);
+        when(() => mockShellService.runScript(any(that: contains("git"))))
+            .thenAnswer((_) async => []);
+        // act
+        await repoService.tryFetchingChanges(gitRepo);
+        // assert
+        verify(
+          () => mockShellService.runScript(
+            GIT_REFRESH_BRANCH.format([gitBranch, ""]),
+          ),
+        );
+      },
+    );
+
+    test(
+      'Should fetch successfully if it is from remote',
+      () async {
+        // arrange
+        final gitRepo = generateGitRepo(fromRemote: true);
+        when(() => mockAppConfig.gitSSLEnabled).thenReturn(true);
+        when(() => mockAppConfig.gitForceRemote).thenReturn(false);
         when(() => mockAppConfig.maxDuration).thenReturn(Duration.zero);
         when(() => mockShellService.runScript(any(that: contains("git"))))
             .thenAnswer((_) async => []);

@@ -7,6 +7,7 @@ import 'package:process_run/process_run.dart';
 import '../config/app_config.dart';
 import '../config/logger.dart';
 import '../constants/constants.dart' as constants;
+import '../exceptions/exceptions.dart';
 import '../exceptions/file_system_exceptions.dart';
 import '../exceptions/git_exceptions.dart';
 import '../models/git_repo.dart';
@@ -42,7 +43,7 @@ class RepoService {
       gitDir: Directory(gitPath),
       gitUrl: gitUrl,
       branch: _appConfig.gitBranch,
-      toClone: isGitUrl,
+      fromRemote: isGitUrl,
     );
   }
 
@@ -55,9 +56,10 @@ class RepoService {
   }
 
   Future<void> tryCloning(final GitRepo gitRepo) async {
-    if (!gitRepo.toClone) return;
+    if (!gitRepo.fromRemote) return;
 
-    if (gitRepo.gitDir.existsSync()) gitRepo.gitDir.deleteSync(recursive: true);
+    final exists = await _deleteGitDirIfHasNoCommits(gitRepo.gitDir);
+    if(exists) return;
 
     final runScript = _shellService.runScript(constants.GIT_CLONE.format([
       gitRepo.gitUrl,
@@ -67,6 +69,22 @@ class RepoService {
 
     await _timeoutFor(runScript);
     log.i("Successfully cloned at: ${gitRepo.gitDir.absolute.path}");
+  }
+
+  // * Necessary for windows
+  Future<bool> _deleteGitDirIfHasNoCommits(Directory gitDir) async {
+    bool exists = gitDir.existsSync();
+    _shellService.moveShellTo(gitDir.absolute.path);
+    try {
+      if (exists) {
+        await _shellService.runScript(constants.GIT_REV_PARSE_HEAD);
+      }
+    } on AppShellException {
+      gitDir.deleteSync(recursive: true);
+      exists = false;
+    }
+    _shellService.popShell();
+    return exists;
   }
 
   Future<void> checkGitPath(final GitRepo gitRepo) async {
@@ -89,7 +107,7 @@ class RepoService {
     final bool forceRemote = _appConfig.gitForceRemote;
     await _validateGitBranch(gitRepo);
 
-    if (!forceRemote || gitRepo.toClone) return;
+    if (!forceRemote && !gitRepo.fromRemote) return;
 
     log.i('Getting latests changes for "${gitRepo.branch}" branch');
 
