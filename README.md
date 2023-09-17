@@ -23,7 +23,7 @@ To run this project, you will need to add the following environment variables to
 
 `SECRETS_PATH` Optional. The subfolder where the secret files are saved. By default is 'secret'
 
-`MAX_DURATION_IN_MIN` Optional. The max duration for fetch get last remote version. By default is 3
+`MAX_DURATION_IN_MIN` Optional. The max duration for fetch get last remote version. By default is 2
 
 ## Run Locally
 
@@ -76,10 +76,10 @@ Before to run this app requires the following
 
 You can download the binaries on the [releases](https://github.com/jsilverdev/config_props_extractor/releases) section.
 
-Or git checkout to a desired tag (for example v1.3.0):
+Or git checkout to a desired tag (for example v1.4.0):
 
 ```bash
-  git checkout tags/v1.3.0
+  git checkout tags/v1.4.0
 ```
 
 And then run the binary for your platform

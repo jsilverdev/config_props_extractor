@@ -9,16 +9,21 @@ import 'services/shell_service.dart';
 Future<void> runApp(List<String> arguments) async {
   final appConfig = AppConfig();
 
+  final shellService = ShellService();
   final repoService = RepoService(
     appConfig,
-    ShellService(),
+    shellService,
   );
 
-  String gitPath = await repoService.setup();
+  final gitRepo = repoService.preRequisites();
+  await repoService.tryCloning(gitRepo);
+  await repoService.checkGitPath(gitRepo);
+  await repoService.tryFetchingChanges(gitRepo);
+  await repoService.applyChanges(gitRepo);
 
-  final kubeConfigService = KubeConfigService(appConfig);
+  final kubeConfigService = KubeConfigService(appConfig, shellService);
   kubeConfigService
-    ..loadConfigDatasFrom(gitPath: gitPath)
+    ..loadConfigDatasFromCurrentPath()
     ..saveDataAsPropertiesFile(
       fileName: constants.PROPERTIES_FILENAME,
       config: PropertiesStringConfig.properties(),

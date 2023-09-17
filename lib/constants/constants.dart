@@ -26,6 +26,8 @@ const String GIT_TOP_LEVEL_PATH = "git rev-parse --show-toplevel";
 
 const String GIT_CLONE = "git {3} clone {1} {2}";
 
+const String GIT_REV_PARSE_HEAD = "git rev-parse HEAD";
+
 const GIT_SSL_VERIFY_FALSE = "http.sslVerify=false";
 
 const TXT_FILENAME = "properties_file.txt";

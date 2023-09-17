@@ -1,20 +1,24 @@
 import 'dart:io';
 
+import 'package:config_props_extractor/exceptions/exceptions.dart';
 import 'package:config_props_extractor/exceptions/file_system_exceptions.dart';
 import 'package:config_props_extractor/services/shell_service.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:process_run/process_run.dart';
 import 'package:test/test.dart';
 
-class MockShell extends Mock implements Shell {}
+class _MockShell extends Mock implements Shell {}
+
+class _MockProcessSignal extends Mock implements ProcessSignal {}
+
+class _MockProcess extends Mock implements Process {}
 
 void main() {
   late ShellService shellService;
-  late MockShell mockShell;
+  late _MockShell mockShell;
 
   setUp(() {
-    mockShell = MockShell();
-    shellService = ShellService(shell: mockShell);
+    mockShell = _MockShell();
   });
 
   group('Which', () {
@@ -22,6 +26,7 @@ void main() {
     late ShellEnvironment environment;
 
     setUp(() {
+      shellService = ShellService(shell: mockShell);
       environment = ShellEnvironment.empty()..paths.clear();
       shellOptions = ShellOptions(
         environment: environment,
@@ -79,13 +84,17 @@ void main() {
   });
 
   group('Run Shell', () {
+    setUp(() {
+      shellService = ShellService(shell: mockShell);
+    });
+
     test(
       'Should Run Script',
       () async {
         // arrange
         List<ProcessResult> expectedResult = [];
         when(
-          () => mockShell.run(any()),
+          () => mockShell.run(any(), onProcess: any(named: 'onProcess')),
         ).thenAnswer(
           (_) async => expectedResult,
         );
@@ -112,7 +121,7 @@ void main() {
         shellService.moveShellTo(folderPath);
         // assert
         expect(
-          shellService.workingDir,
+          shellService.currentPath,
           equals(folderPath),
         );
       },
@@ -130,14 +139,14 @@ void main() {
         shellService.popShell();
         // assert
         expect(
-          shellService.workingDir,
+          shellService.currentPath,
           equals(folderPath),
         );
       },
     );
 
     test(
-      'Should Dispose All Correctly',
+      'Should Dispose Correctly',
       () async {
         // arrange
         when(() => mockShell.kill()).thenReturn(true);
@@ -147,6 +156,84 @@ void main() {
           // assert
           returnsNormally,
         );
+      },
+    );
+
+    test(
+      'Should Throw and AppShellException on ShellException for shell run',
+      () async {
+        // arrange
+        when(
+          () => mockShell.run(any(), onProcess: any(named: 'onProcess')),
+        ).thenAnswer((_) async => throw ShellException("", null));
+        // act
+
+        expect(
+          () => shellService.runScript("script"),
+          throwsA(
+            isA<AppShellException>(),
+          ),
+        );
+        // assert
+      },
+    );
+  });
+
+  group('For Windows', () {
+    late _MockProcessSignal mockProcessSignal;
+    late _MockProcess mockProcess;
+
+    final processRunCalls = <List<String>>[];
+
+    setUp(() {
+      mockProcessSignal = _MockProcessSignal();
+      mockProcess = _MockProcess();
+      shellService = ShellService(
+        shell: mockShell,
+        processSignal: mockProcessSignal,
+        isWindows: true,
+        runProcessSync: (executable, arguments) {
+          processRunCalls.add([executable, ...arguments]);
+          return ProcessResult(1, 0, "", "");
+        },
+      );
+    });
+
+    test(
+      'Should init a script on Windows',
+      () async {
+        // arrange
+        const pid = 100;
+        when(() => mockProcess.pid).thenReturn(pid);
+        when(() => mockProcessSignal.watch()).thenAnswer(
+          (_) => Stream.value(mockProcessSignal),
+        );
+        when(
+          () => mockShell.run(
+            any(),
+            onProcess: any(named: 'onProcess'),
+          ),
+        ).thenAnswer((invocation) async {
+          (invocation.namedArguments[const Symbol('onProcess')] as Function(
+            Process process,
+          ))
+              .call(mockProcess);
+
+          return List<ProcessResult>.empty();
+        });
+
+        // act
+        final result = await shellService.runScript("");
+
+        // assert
+        expect(result, isNotNull);
+        expect(
+          processRunCalls,
+          equals([
+            ['taskkill', '/pid', '$pid', '/f', '/t']
+          ]),
+        );
+        verifyNever(() => mockShell.kill());
       },
     );
   });

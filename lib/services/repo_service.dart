@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:path/path.dart' as path;
@@ -6,8 +7,10 @@ import 'package:process_run/process_run.dart';
 import '../config/app_config.dart';
 import '../config/logger.dart';
 import '../constants/constants.dart' as constants;
+import '../exceptions/exceptions.dart';
 import '../exceptions/file_system_exceptions.dart';
 import '../exceptions/git_exceptions.dart';
+import '../models/git_repo.dart';
 import '../utils/git_utils.dart';
 import '../utils/string_utils.dart';
 import 'shell_service.dart';
@@ -15,155 +18,141 @@ import 'shell_service.dart';
 class RepoService {
   final AppConfig _appConfig;
   final ShellService _shellService;
-
-  String _gitPath = "";
-  bool _isCloned = false;
-  final String _defaultReposFolder;
+  final String _reposFolder;
 
   RepoService(
     this._appConfig,
     this._shellService, {
-    String? defaultParentFolder,
-  }) : _defaultReposFolder = defaultParentFolder ?? constants.REPOS_FOLDER;
+    String? reposFolder,
+  }) : _reposFolder = reposFolder ?? constants.REPOS_FOLDER;
 
-  Future<void> _overrideConfigGitBranchWithCurrentOnEmpty() async {
-    if (_appConfig.gitBranch != "") return;
+  GitRepo _createGitRepo(String gitPathOrUrl) {
+    String gitPath = gitPathOrUrl;
+    String gitUrl = "";
+    final bool isGitUrl = isValidGitUrl(gitPathOrUrl);
 
-    log.w("You don't define an specific branch, using current branch");
-    final res = await _shellService.runScript(
-      constants.GIT_BRANCH_SHOW_CURRENT,
-    );
-    _appConfig.gitBranch = res.outLines.first;
-  }
-
-  Future<void> _moveToConfigGitBranch() async {
-    String branch = _appConfig.gitBranch;
-    log.i('Using branch "$branch"');
-    String safeBranch = shellArgument(branch);
-    try {
-      await _shellService.runScript(
-        constants.GIT_CHECKOUT.format([safeBranch]),
+    if (isGitUrl) {
+      gitPath = path.join(
+        _reposFolder,
+        extractPathFromGitUrl(gitPathOrUrl),
       );
-    } on ShellException catch (e) {
-      throw GitShellException(e);
+      gitUrl = gitPathOrUrl;
     }
-  }
 
-  Future<void> _refreshLastChangesOnRemoteBranch() async {
-    final String branch = _appConfig.gitBranch;
-    log.i('Getting latests changes for "$branch" branch');
-    final duration = Duration(minutes: _appConfig.maxDurationInMin);
-    try {
-      await _shellService
-          .runScript(
-        constants.GIT_REFRESH_BRANCH.format([
-          branch,
-          _getRemoteConfig(),
-        ]),
-      )
-          .timeout(
-        duration,
-        onTimeout: () {
-          _shellService.dispose();
-          throw GitRemoteToManyTimeException(minutes: duration.inMinutes);
-        },
-      );
-    } on ShellException catch (e) {
-      throw GitShellException(e);
-    }
-  }
-
-  Future<void> _overrideChangesWithRemote() async {
-    final String branch = _appConfig.gitBranch;
-    log.i('Override branch "$branch" with remote version');
-    String safeBranch = shellArgument(branch);
-    await _shellService.runScript(
-      constants.GIT_OVERRIDE_WITH_REMOTE.format([safeBranch]),
+    return GitRepo(
+      gitDir: Directory(gitPath),
+      gitUrl: gitUrl,
+      branch: _appConfig.gitBranch,
+      fromRemote: isGitUrl,
     );
   }
 
-  Future<void> _validateIfPathIsGitRepo() async {
-    try {
-      final res = await _shellService.runScript(constants.GIT_TOP_LEVEL_PATH);
-      if (!path.equals(_gitPath, res.outLines.first)) {
-        throw IncorrectTopLevelGitPathException(
-          path: _gitPath,
-        );
-      }
-    } on ShellException catch (e) {
-      throw GitShellException(e);
-    }
-  }
-
-  Future<bool> _tryCloneInPath({
-    required String gitUrl,
-    required String gitPath,
-  }) async {
-    if ((Directory(_gitPath).existsSync())) return false;
-
-    try {
-      await _shellService.runScript(constants.GIT_CLONE.format([
-        gitUrl,
-        gitPath,
-        _getRemoteConfig(),
-      ]));
-      log.i("Successfully cloned at: $gitPath");
-      return true;
-    } on ShellException catch (e) {
-      throw GitShellException(e);
-    }
-  }
-
-  Future<void> _validateGitUrlAndClone() async {
-    final bool isGitUrl = isValidGitUrl(_appConfig.gitRepoPath);
-
-    if (!isGitUrl) {
-      _gitPath = _appConfig.gitRepoPath;
-      _isCloned = false;
-      return;
-    }
-
-    _gitPath = path.absolute(
-      _defaultReposFolder,
-      extractGitPath(_appConfig.gitRepoPath),
-    );
-
-    _isCloned = await _tryCloneInPath(
-      gitUrl: _appConfig.gitRepoPath,
-      gitPath: _gitPath,
-    );
-  }
-
-  void _validateGitPathAndMoveShell() {
-    if (!Directory(_gitPath).existsSync()) {
-      throw FolderNotFoundException(path: _gitPath);
-    }
-    _shellService.moveShellTo(_gitPath);
-  }
-
-  Future<String> setup() async {
+  GitRepo preRequisites() {
     _shellService.checkExecutable(constants.GIT);
 
     log.i("Checking properties for: ${_appConfig.gitRepoPath}");
 
-    await _validateGitUrlAndClone();
-
-    _validateGitPathAndMoveShell();
-    await _validateIfPathIsGitRepo();
-    await _overrideConfigGitBranchWithCurrentOnEmpty();
-
-    if (!_isCloned && _appConfig.gitForceRemote) {
-      await _refreshLastChangesOnRemoteBranch();
-    }
-
-    await _moveToConfigGitBranch();
-
-    if (_appConfig.gitForceRemote) {
-      await _overrideChangesWithRemote();
-    }
-
-    return _gitPath;
+    return _createGitRepo(_appConfig.gitRepoPath);
   }
+
+  Future<void> tryCloning(final GitRepo gitRepo) async {
+    if (!gitRepo.fromRemote) return;
+
+    final exists = await _deleteGitDirIfHasNoCommits(gitRepo.gitDir);
+    if(exists) return;
+
+    final runScript = _shellService.runScript(constants.GIT_CLONE.format([
+      gitRepo.gitUrl,
+      gitRepo.gitDir.absolute.path,
+      _getRemoteConfig(),
+    ]));
+
+    await _timeoutFor(runScript);
+    log.i("Successfully cloned at: ${gitRepo.gitDir.absolute.path}");
+  }
+
+  // * Necessary for windows
+  Future<bool> _deleteGitDirIfHasNoCommits(Directory gitDir) async {
+    bool exists = gitDir.existsSync();
+    _shellService.moveShellTo(gitDir.absolute.path);
+    try {
+      if (exists) {
+        await _shellService.runScript(constants.GIT_REV_PARSE_HEAD);
+      }
+    } on AppShellException {
+      gitDir.deleteSync(recursive: true);
+      exists = false;
+    }
+    _shellService.popShell();
+    return exists;
+  }
+
+  Future<void> checkGitPath(final GitRepo gitRepo) async {
+    final String gitPath = gitRepo.gitDir.absolute.path;
+    if (!Directory(gitPath).existsSync()) {
+      throw FolderNotFoundException(path: gitPath);
+    }
+
+    _shellService.moveShellTo(gitPath);
+
+    final res = await _shellService.runScript(constants.GIT_TOP_LEVEL_PATH);
+    if (!path.equals(gitPath, res.outLines.first)) {
+      throw IncorrectTopLevelGitPathException(
+        path: gitPath,
+      );
+    }
+  }
+
+  Future<void> tryFetchingChanges(final GitRepo gitRepo) async {
+    final bool forceRemote = _appConfig.gitForceRemote;
+    await _validateGitBranch(gitRepo);
+
+    if (!forceRemote && !gitRepo.fromRemote) return;
+
+    log.i('Getting latests changes for "${gitRepo.branch}" branch');
+
+    final runScript = _shellService.runScript(
+      constants.GIT_REFRESH_BRANCH.format([
+        gitRepo.branch,
+        _getRemoteConfig(),
+      ]),
+    );
+
+    await _timeoutFor(runScript);
+  }
+
+  Future<void> applyChanges(final GitRepo gitRepo) async {
+    log.i('Using branch "${gitRepo.branch}"');
+    await _shellService.runScript(
+      constants.GIT_CHECKOUT.format([gitRepo.branch]),
+    );
+
+    // log.i('Override branch "${gitRepo.branch}" with remote version');
+    await _shellService.runScript(
+      constants.GIT_OVERRIDE_WITH_REMOTE.format([gitRepo.branch]),
+    );
+  }
+
+  Future<void> _validateGitBranch(final GitRepo gitRepo) async {
+    if (gitRepo.branch != "") return;
+
+    log.w("You don't define an specific branch, using current branch");
+
+    final res = await _shellService.runScript(
+      constants.GIT_BRANCH_SHOW_CURRENT,
+    );
+    gitRepo.branch = res.outLines.first;
+  }
+
+  Future<T> _timeoutFor<T>(Future<T> runScript) => runScript.timeout(
+        _appConfig.maxDuration,
+        onTimeout: () {
+          _shellService.dispose();
+          throw GitRemoteToManyTimeException(
+            minutes: _appConfig.maxDuration.inMinutes,
+          );
+        },
+      );
 
   String _getRemoteConfig() {
     final config = "{}".format([

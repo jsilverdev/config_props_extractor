@@ -40,12 +40,6 @@ class AppConfig {
         () => "",
       );
 
-  set gitBranch(String gitBranch) {
-    _dotEnv.addAll({
-      ConfigProperty.gitBranch.value: gitBranch,
-    });
-  }
-
   String get configMapsPath => _dotEnv.getOrElse(
         ConfigProperty.configMapsPath.value,
         () => constants.DEFAULT_CONFIG_MAP_PATH,
@@ -56,6 +50,7 @@ class AppConfig {
         () => constants.DEFAULT_CONFIG_SECRET_PATH,
       );
 
-  int get maxDurationInMin =>
-      _dotEnv[ConfigProperty.maxDurationInMin.value]?.toInt(3) ?? 3;
+  Duration get maxDuration => Duration(
+        minutes: _dotEnv[ConfigProperty.maxDurationInMin.value]?.toInt(2) ?? 2,
+      );
 }

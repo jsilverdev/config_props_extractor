@@ -1,45 +1,45 @@
 import 'package:config_props_extractor/exceptions/exceptions.dart';
-import 'package:config_props_extractor/exceptions/git_exceptions.dart';
 import 'package:config_props_extractor/exceptions/handler/handler.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
 
-class MockAppException extends Mock implements AppException {}
+class _MockAppException extends Mock implements AppException {}
 
-class MockGitException extends Mock implements GitException {}
+class _MockUnknownException extends Mock implements Exception {}
 
 void main() {
+  dynamic fakeExit(int exitCode) {}
+
   test('Run Correctly', () async {
     expect(
-      () => handle(() => {}),
-      returnsNormally,
-    );
-  });
-
-
-  test('Catch GitException', () async {
-    expect(
-      () => handle(() {
-        throw MockGitException();
-      }),
+      () => handle(
+        () => {},
+        exit: fakeExit,
+      ),
       returnsNormally,
     );
   });
 
   test('Catch AppException', () async {
     expect(
-      () => handle(() {
-        throw MockAppException();
-      }),
+      () => handle(
+        () {
+          throw _MockAppException();
+        },
+        exit: fakeExit,
+      ),
       returnsNormally,
     );
   });
 
   test('Catch UnknownException', () async {
     expect(
-      () => handle(() {
-        throw Exception();
-      }),
+      () => handle(
+        () {
+          throw _MockUnknownException();
+        },
+        exit: fakeExit,
+      ),
       returnsNormally,
     );
   });

@@ -1,14 +1,29 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:path/path.dart' as path;
 import 'package:process_run/process_run.dart';
 
+import '../exceptions/exceptions.dart';
 import '../exceptions/file_system_exceptions.dart';
+import '../models/io_models.dart';
 
 class ShellService {
   Shell _shell;
+  int? _pid;
+  final bool _isWindows;
+  final ProcessRunSync _runProcessSync;
+  final ProcessSignal _processSignal;
 
-  ShellService({Shell? shell}) : _shell = shell ?? Shell(verbose: false);
+  ShellService({
+    Shell? shell,
+    bool? isWindows,
+    ProcessRunSync? runProcessSync,
+    ProcessSignal? processSignal,
+  })  : _shell = shell ?? Shell(verbose: false),
+        _isWindows = isWindows ?? Platform.isWindows,
+        _runProcessSync = runProcessSync ?? Process.runSync,
+        _processSignal = processSignal ?? ProcessSignal.sigint;
 
   void checkExecutable(String executable) {
     final execLocation = path.basename(executable) == executable
@@ -20,8 +35,21 @@ class ShellService {
     }
   }
 
-  Future<List<ProcessResult>> runScript(String script) {
-    return _shell.run(script);
+  Future<List<ProcessResult>> runScript(String script) async {
+    try {
+      return await _shell.run(script, onProcess: (process) {
+        if (_pid == null) {
+          _pid = process.pid;
+          late final StreamSubscription<ProcessSignal> sub;
+          sub = _processSignal.watch().listen((event) {
+            sub.cancel();
+            dispose();
+          });
+        }
+      });
+    } on ShellException catch (e) {
+      throw AppShellException(e);
+    }
   }
 
   void moveShellTo(String path) {
@@ -33,8 +61,12 @@ class ShellService {
   }
 
   void dispose() {
+    if (_pid != null && _isWindows) {
+      _runProcessSync('taskkill', ['/pid', '$_pid', '/f', '/t']);
+      return;
+    }
     _shell.kill();
   }
 
-  String? get workingDir => _shell.options.workingDirectory;
+  String get currentPath => _shell.path;
 }

@@ -7,7 +7,6 @@ import 'package:test/test.dart';
 class MockStdout extends Mock implements Stdout {}
 
 void main() {
-
   late MockStdout mockStdout;
 
   setUp(() {
@@ -15,13 +14,9 @@ void main() {
   });
 
   test('Should Instance logger', () async {
-
-    when(() => mockStdout.hasTerminal)
-    .thenReturn(true);
-    when(() => mockStdout.supportsAnsiEscapes)
-    .thenReturn(true);
-    when(() => mockStdout.terminalColumns)
-    .thenReturn(100);
+    when(() => mockStdout.hasTerminal).thenReturn(true);
+    when(() => mockStdout.supportsAnsiEscapes).thenReturn(true);
+    when(() => mockStdout.terminalColumns).thenReturn(100);
 
     final logger = IOOverrides.runZoned(
       () => log,
