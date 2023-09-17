@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning].
 
 - /
 
+## [1.4.0] - 2023-09-17
+
+### Added
+
+- Now always refresh cloned repos
+- Improved performance
+
+### Changed
+
+- Updated dependencies
+
+### Fixed
+
+- Sub-Processes now were killed on cancel or on timeout
+
 ## [1.3.0] - 2023-09-13
 
 ### Added
