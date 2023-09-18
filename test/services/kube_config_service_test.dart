@@ -1,13 +1,12 @@
 import 'dart:io';
 
 import 'package:clock/clock.dart';
-import 'package:config_props_extractor/constants/constants.dart';
 import 'package:config_props_extractor/models/properties_string_config.dart';
 import 'package:config_props_extractor/services/kube_config_service.dart';
 import 'package:config_props_extractor/utils/kube_utils.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:test/test.dart';
 import 'package:path/path.dart' as path;
+import 'package:test/test.dart';
 
 import '../helpers/mocks.dart';
 
