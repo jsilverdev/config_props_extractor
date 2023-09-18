@@ -71,21 +71,25 @@ void main() {
 
   group("Save Data to File", () {
     final File fileShouldExists = File(
-      path.absolute("test/_data/results/example_file"),
+      path.absolute("test/_data/results/file_that_exists"),
     );
     final File fileShouldNotExists = File(
-      path.absolute("test/_data/results/new_example_file"),
+      path.absolute("test/_data/results/file_that_not_exists"),
     );
 
+    void clearFileIfExists(File file) {
+      if (file.existsSync()) file.deleteSync();
+    }
+
     setUp(() {
-      if (fileShouldNotExists.existsSync()) fileShouldNotExists.deleteSync();
+      clearFileIfExists(fileShouldExists);
+      clearFileIfExists(fileShouldNotExists);
       kubeConfigService = KubeConfigService(mockAppConfig, mockShellService);
     });
 
     tearDown(() {
-      if (fileShouldNotExists.existsSync()) {
-        fileShouldNotExists.deleteSync();
-      }
+      clearFileIfExists(fileShouldExists);
+      clearFileIfExists(fileShouldNotExists);
     });
 
     void testSaveData(File file) {
@@ -99,9 +103,11 @@ void main() {
       );
 
       // assert
-      expect(fileShouldExists.existsSync(), true);
-      expect(fileShouldExists.readAsStringSync(),
-          "# Created at: 2022-02-02 0:00:00\n\n");
+      expect(file.existsSync(), true);
+      expect(
+        file.readAsStringSync(),
+        "# Created at: 2022-02-02 0:00:00\n\n",
+      );
     }
 
     test(
@@ -114,6 +120,7 @@ void main() {
     test(
       'Should delete file with same name and then save Data as Properties',
       () async {
+        if (!fileShouldExists.existsSync()) fileShouldExists.createSync();
         testSaveData(fileShouldExists);
       },
     );
