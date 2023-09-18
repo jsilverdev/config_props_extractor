@@ -76,10 +76,10 @@ Before to run this app requires the following
 
 You can download the binaries on the [releases](https://github.com/jsilverdev/config_props_extractor/releases) section.
 
-Or git checkout to a desired tag (for example v1.4.0):
+Or git checkout to a desired tag (for example v1.4.1):
 
 ```bash
-  git checkout tags/v1.4.0
+  git checkout tags/v1.4.1
 ```
 
 And then run the binary for your platform
