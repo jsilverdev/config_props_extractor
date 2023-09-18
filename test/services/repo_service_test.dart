@@ -46,7 +46,7 @@ void main() {
         expect(path.equals(gitRepo.gitDir.path, gitPath), equals(true));
         expect(gitRepo.gitUrl, "");
         expect(gitRepo.branch, gitBranch);
-        expect(gitRepo.fromRemote, false);
+        expect(gitRepo.toClone, false);
       },
     );
 
@@ -63,7 +63,7 @@ void main() {
         expect(path.equals(gitRepo.gitDir.path, gitPath), equals(true));
         expect(gitRepo.gitUrl, gitUrl);
         expect(gitRepo.branch, gitBranch);
-        expect(gitRepo.fromRemote, true);
+        expect(gitRepo.toClone, true);
       },
     );
   });
@@ -75,7 +75,7 @@ void main() {
     setUp(() {
       gitRepo = generateGitRepo(
         gitPath: gitDirToClone.path,
-        fromRemote: true,
+        toClone: true,
       );
     });
 
@@ -90,10 +90,10 @@ void main() {
       () async {
         // arrange
         final localGitRepo = GitRepo(
-          gitDir: Directory(gitPath),
+          gitPath: gitPath,
           gitUrl: "",
           branch: gitBranch,
-          fromRemote: false,
+          toClone: false,
         );
         // act
         await repoService.tryCloning(localGitRepo);
@@ -126,6 +126,7 @@ void main() {
         // act
         await repoService.tryCloning(gitRepo);
         // assert
+        expect(gitRepo.wasCloned, equals(true));
         verify(() => mockShellService.runScript(GIT_REV_PARSE_HEAD));
         verify(
           () => mockShellService.runScript(GIT_CLONE.format([
@@ -156,6 +157,7 @@ void main() {
         await repoService.tryCloning(gitRepo);
 
         // assert
+        expect(gitRepo.existsOnLocal, equals(true));
         verify(
           () => mockShellService.runScript(
             GIT_REV_PARSE_HEAD,
@@ -260,7 +262,7 @@ void main() {
       'Should fetch successfully if force remote is enabled',
       () async {
         // arrange
-        final gitRepo = generateGitRepo(fromRemote: false);
+        final gitRepo = generateGitRepo(toClone: false);
         when(() => mockAppConfig.gitSSLEnabled).thenReturn(true);
         when(() => mockAppConfig.gitForceRemote).thenReturn(true);
         when(() => mockAppConfig.maxDuration).thenReturn(Duration.zero);
@@ -278,10 +280,10 @@ void main() {
     );
 
     test(
-      'Should fetch successfully if it is from remote',
+      "Should fetch successfully if it is set to clone but wasn't cloned",
       () async {
         // arrange
-        final gitRepo = generateGitRepo(fromRemote: true);
+        final gitRepo = generateGitRepo(toClone: true);
         when(() => mockAppConfig.gitSSLEnabled).thenReturn(true);
         when(() => mockAppConfig.gitForceRemote).thenReturn(false);
         when(() => mockAppConfig.maxDuration).thenReturn(Duration.zero);

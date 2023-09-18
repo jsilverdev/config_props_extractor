@@ -4,12 +4,15 @@ class GitRepo {
   final Directory gitDir;
   final String gitUrl;
   String branch;
-  final bool fromRemote;
+  final bool toClone;
+  bool wasCloned = false;
 
   GitRepo({
-    required this.gitDir,
+    required String gitPath,
     required this.gitUrl,
     required this.branch,
-    required this.fromRemote,
-  });
+    required this.toClone,
+  }) : gitDir = Directory(gitPath).absolute;
+
+  bool get existsOnLocal => gitDir.existsSync();
 }

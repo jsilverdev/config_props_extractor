@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:config_props_extractor/models/git_repo.dart';
 
 const reposFolder = "test/_data";
@@ -11,12 +9,12 @@ GitRepo generateGitRepo({
   String gitPath = gitPath,
   String gitUrl = gitUrl,
   String branch = gitBranch,
-  bool fromRemote = false,
+  bool toClone = false,
 }) {
   return GitRepo(
-    gitDir: Directory(gitPath),
+    gitPath: gitPath,
     gitUrl: gitUrl,
     branch: branch,
-    fromRemote: fromRemote,
+    toClone: toClone,
   );
 }

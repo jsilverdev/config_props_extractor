@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:path/path.dart' as path;
 import 'package:process_run/process_run.dart';
@@ -40,10 +39,10 @@ class RepoService {
     }
 
     return GitRepo(
-      gitDir: Directory(gitPath),
+      gitPath: gitPath,
       gitUrl: gitUrl,
       branch: _appConfig.gitBranch,
-      fromRemote: isGitUrl,
+      toClone: isGitUrl,
     );
   }
 
@@ -56,10 +55,10 @@ class RepoService {
   }
 
   Future<void> tryCloning(final GitRepo gitRepo) async {
-    if (!gitRepo.fromRemote) return;
+    if (!gitRepo.toClone) return;
 
-    final exists = await _deleteGitDirIfHasNoCommits(gitRepo.gitDir);
-    if(exists) return;
+    await _deleteIfRepoHasNoCommits(gitRepo);
+    if (gitRepo.existsOnLocal) return;
 
     final runScript = _shellService.runScript(constants.GIT_CLONE.format([
       gitRepo.gitUrl,
@@ -69,27 +68,25 @@ class RepoService {
 
     await _timeoutFor(runScript);
     log.i("Successfully cloned at: ${gitRepo.gitDir.absolute.path}");
+    gitRepo.wasCloned = true;
   }
 
   // * Necessary for windows
-  Future<bool> _deleteGitDirIfHasNoCommits(Directory gitDir) async {
-    bool exists = gitDir.existsSync();
-    _shellService.moveShellTo(gitDir.absolute.path);
+  Future<void> _deleteIfRepoHasNoCommits(GitRepo gitRepo) async {
+    _shellService.moveShellTo(gitRepo.gitDir.path);
     try {
-      if (exists) {
+      if (gitRepo.existsOnLocal) {
         await _shellService.runScript(constants.GIT_REV_PARSE_HEAD);
       }
     } on AppShellException {
-      gitDir.deleteSync(recursive: true);
-      exists = false;
+      gitRepo.gitDir.deleteSync(recursive: true);
     }
     _shellService.popShell();
-    return exists;
   }
 
   Future<void> checkGitPath(final GitRepo gitRepo) async {
-    final String gitPath = gitRepo.gitDir.absolute.path;
-    if (!Directory(gitPath).existsSync()) {
+    final String gitPath = gitRepo.gitDir.path;
+    if (!gitRepo.existsOnLocal) {
       throw FolderNotFoundException(path: gitPath);
     }
 
@@ -106,8 +103,9 @@ class RepoService {
   Future<void> tryFetchingChanges(final GitRepo gitRepo) async {
     final bool forceRemote = _appConfig.gitForceRemote;
     await _validateGitBranch(gitRepo);
+    final bool forceRefresh = gitRepo.toClone && !gitRepo.wasCloned;
 
-    if (!forceRemote && !gitRepo.fromRemote) return;
+    if (!forceRemote && !forceRefresh) return;
 
     log.i('Getting latests changes for "${gitRepo.branch}" branch');
 

@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning].
 
 - /
 
+## [1.4.1] - 2023-09-18
+
+
+### Fixed
+
+- Now the urls are only refreshed when are already cloned and not always
+
 ## [1.4.0] - 2023-09-17
 
 ### Added
