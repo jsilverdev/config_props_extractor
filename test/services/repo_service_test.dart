@@ -73,6 +73,9 @@ void main() {
     final gitDirToClone = Directory("test/_data/folder_to_clone");
 
     setUp(() {
+      if (gitDirToClone.existsSync()) {
+        gitDirToClone.deleteSync(recursive: true);
+      }
       gitRepo = generateGitRepo(
         gitPath: gitDirToClone.path,
         toClone: true,
