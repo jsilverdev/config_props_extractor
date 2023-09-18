@@ -36,10 +36,15 @@ jobs:
         run: |
           LATEST_TAG=${{ steps.latest_tag.outputs.tag }}
           VERSION=v${{ steps.get_latest_changelog_version.outputs.version_number }}
+          if [[ "$LATEST_TAG" == "$VERSION" ]]; then
+            echo "Version from CHANGELOG.md ($VERSION) is the same than the latest tag ($LATEST_TAG)"
+            exit 1
+          fi
           if [[ "$(printf '%s\n' "$VERSION" "$LATEST_TAG" | tr '-' '~' | sort -V | head -n1 | tr '~' '-')" != "$LATEST_TAG" ]]; then
             echo "Version from CHANGELOG.md ($VERSION) is not greater than the latest tag ($LATEST_TAG)"
             exit 1
           fi
+          echo "Version from CHANGELOG.md ($VERSION) is greater than the latest tag ($LATEST_TAG)"
 
       - name: Restore Cache dependencies
         id: restore-cache-deps
