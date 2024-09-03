@@ -164,7 +164,7 @@ jobs:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
       - name: Download compiled files
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4.1.7
         with:
           name: compiled-files
           path: binaries/
